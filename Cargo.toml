@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 dioxus = "0.4.0"
+dioxus-desktop = "0.4.0"
+dioxus-free-icons = "0.7.0"
+dioxus-material-icons = "1.1.0"
