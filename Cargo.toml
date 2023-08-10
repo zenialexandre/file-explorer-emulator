@@ -6,10 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dioxus = "0.3.2"
-dioxus-desktop = "0.3.0"
-dioxus-free-icons = "0.6.0"
+dioxus = "0.4.0"
+dioxus-desktop = "0.4.0"
+dioxus-free-icons = "0.7.0"
 dioxus-material-icons = "1.1.0"
 image = "0.24.6"
-tao = "0.20.0"
-icon = "0.1.0"
