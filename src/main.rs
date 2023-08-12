@@ -17,7 +17,14 @@ fn main() {
 
 fn app(cx: Scope) -> Element {
     cx.render(rsx! (
-       div { "Hello, World!" }
+        style { include_str!("./assets/styles.css")  }
+        link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
+        header {
+            i { class: "material-icons icon-menu", "menu" }
+            h1 { "Files: ", /*files.read().current()*/ }
+            span { }
+            i { class: "material-icons", onclick: move |_| close_application(&cx), "logout" }
+        }
     ))
 }
 
@@ -29,4 +36,9 @@ fn load_icon_by_path(file_path: &str) -> Option<TaoIcon> {
     } else {
         None
     }
+}
+
+fn close_application(cx: Scope) {
+    let window = dioxus_desktop::use_window(&cx);
+    window.close_window(window.id());
 }
