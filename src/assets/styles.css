@@ -10,33 +10,10 @@ body {
     padding-top: 77px;
 }
 
-
-/* header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  padding: 20px;
-  background-color: #2196F3;
-  color: white;
-}
-header h1 {
-  float: left;
-  font-size: 20px;
-  font-weight: 400;
-}
-header .material-icons {
-  float: right;
-  cursor: pointer;
-}
-header .icon-menu {
-  float: left;
-  margin-right: 20px;
-} */
-
 main {
-    padding: 20px 50px;
+    padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 .folder * {
@@ -45,44 +22,50 @@ main {
 
 .folder {
     float: left;
-    width: 100px;
-    height: 152px;
+    width: auto;
+    height: auto;
     /* //padding: 20px; */
     margin-right: 50px;
-    margin-bottom: 70px;
+    margin-bottom: 10px;
     border-radius: 2px;
     /* //overflow: hidden; */
     cursor: pointer;
 }
 
 .folder:hover h1 {
-    display: none;
+    background-color: #c6c6c6;
+    opacity: 0.3;
+    border-radius: 5px;
 }
 
-.folder:hover p.cooltip {
+/*.folder:hover p.cooltip {
     opacity: 1;
     top: 0;
-}
+}*/
 
 .folder * {
     text-align: center;
 }
 
 .folder i {
-    margin: 0;
-    font-size: 100px;
+    text-align: left;
+    padding: auto;
+    font-size: 20px;
     color: #607D8B;
 }
 
 .folder h1 {
     position: relative;
     display: block;
-    top: -37px;
+    top: -27px;
     font-size: 20px;
-    font-weight: 400;
+    width: 300px;
+    font-weight: 20px;
+    text-align: left;
+    padding-left: 50px;
 }
 
-.folder p.cooltip {
+/*.folder p.cooltip {
     position: relative;
     top: 5px;
     left: -50%;
@@ -95,9 +78,9 @@ main {
     padding-right: 30px;
     width: 100px;
     opacity: 0;
-}
+}*/
 
-.folder p.cooltip:before {
+/*.folder p.cooltip:before {
     content: '';
     position: absolute;
     display: block;
@@ -109,7 +92,7 @@ main {
     border-radius: 2px;
     background-color: #212121;
     transform: rotate(45deg);
-}
+}*/
 
 div.properties {
     position: fixed;
@@ -155,8 +138,8 @@ header {
     top: 0;
     left: 0;
     right: 0;
-    padding: 20px;
-    background-color: #2196F3;
+    padding: 12px;
+    background-color: #9e43ff;
     color: white;
     display: flex;
     align-items: center;
@@ -171,7 +154,7 @@ header span {
 }
 
 header i {
-    margin: 0 10px;
+    margin: 0 20px;
     cursor: pointer;
 }
 
