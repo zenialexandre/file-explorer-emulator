@@ -47,9 +47,7 @@ fn app(cx: Scope) -> Element {
                         div {
                             class: "folder",
                             key: "{path}",
-                            i { class: "material-icons", ondblclick: move |_| files.write().enter_directory(directory_id), "{icon_type}"
-                                //p { class: "cooltip", "0 folders / 0 files" }
-                            }
+                            i { class: "material-icons", ondblclick: move |_| files.write().enter_directory(directory_id), "{icon_type}" }
                             h1 { "{path_end}" }
                         }
                     )
@@ -94,8 +92,8 @@ impl Files {
     }
 
     fn reload_path_list(&mut self) {
-        let current_path = self.path_stack.last().unwrap();
-        let paths = match std::fs::read_dir(current_path) {
+        //let current_path = self.path_stack.last().unwrap();
+        let paths = match std::fs::read_dir("C://") {
             Ok(e) => e,
             Err(error) => {
                 let error = format!("An error occurred: {error:?}");
