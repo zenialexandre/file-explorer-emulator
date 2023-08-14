@@ -48,7 +48,7 @@ fn app(cx: Scope) -> Element {
                             class: "folder",
                             key: "{path}",
                             i { class: "material-icons", ondblclick: move |_| files.write().enter_directory(directory_id), "{icon_type}" }
-                            h1 { "{path_end}" }
+                            h1 { ondblclick: move |_| files.write().enter_directory(directory_id) , "{path_end}" }
                         }
                     )
                 }),
@@ -83,7 +83,7 @@ fn close_application(cx: Scope) {
 impl Files {
     fn new() -> Self {
       let mut files = Self {
-          path_stack: vec!["./".to_string()],
+          path_stack: vec!["C://".to_string()],
           path_names: vec![],
           error: None,
       };
@@ -92,8 +92,8 @@ impl Files {
     }
 
     fn reload_path_list(&mut self) {
-        //let current_path = self.path_stack.last().unwrap();
-        let paths = match std::fs::read_dir("C://") {
+        let current_path = self.path_stack.last().unwrap();
+        let paths = match std::fs::read_dir(current_path) {
             Ok(e) => e,
             Err(error) => {
                 let error = format!("An error occurred: {error:?}");
