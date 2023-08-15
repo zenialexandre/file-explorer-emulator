@@ -2,6 +2,14 @@ use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
 use image::GenericImageView;
 use dioxus_desktop::tao::window::Icon as TaoIcon;
+use std::sync::Mutex;
+
+#[macro_use]
+extern crate lazy_static;
+
+lazy_static! {
+    static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0);
+}
 
 struct Files {
     path_stack: Vec<String>,
@@ -30,7 +38,8 @@ fn app(cx: Scope) -> Element {
             style { include_str!("./assets/styles.css") }
             header {
                 i { class: "material-icons", onclick: move |_| files.write().walk_to_last_directory(), "arrow_back" }
-                i { class: "material-icons", onclick: move |_| files.write().enter_directory(1), "arrow_forward" }
+                i { class: "material-icons", onclick: move |_|
+                    files.write().enter_directory(get_converted_usize_from_string(CLICKED_DIRECTORY_ID.lock().unwrap().to_string())), "arrow_forward" }
                 h1 { files.read().current() }
                 span { }
                 i { class: "material-icons", onclick: move |_| close_application(cx), "cancel" }
@@ -47,10 +56,14 @@ fn app(cx: Scope) -> Element {
                     };
                     rsx! (
                         div {
+                            ondblclick: move |_| files.write().enter_directory(directory_id),
+                            onclick: move |event| {
+                                event.stop_propagation();
+                                *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
+                            },
                             class: "folder",
                             key: "{path}",
                             div {
-                                ondblclick: move |_| files.write().enter_directory(directory_id),
                                 i { class: "material-icons", "{icon_type}" }
                                 h1 { "{path_end}" }
                             }
@@ -83,6 +96,10 @@ fn load_icon_by_path(file_path: &str) -> Option<TaoIcon> {
 fn close_application(cx: Scope) {
     let window = dioxus_desktop::use_window(&cx);
     window.close_window(window.id());
+}
+
+fn get_converted_usize_from_string(any_string: String) -> usize {
+    return any_string.parse().unwrap();
 }
 
 impl Files {

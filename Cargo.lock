@@ -1072,6 +1072,7 @@ dependencies = [
  "dioxus-free-icons",
  "dioxus-material-icons",
  "image",
+ "lazy_static",
 ]
 
 [[package]]
