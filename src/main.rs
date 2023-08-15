@@ -29,16 +29,18 @@ fn app(cx: Scope) -> Element {
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
             style { include_str!("./assets/styles.css") }
             header {
-                i { class: "material-icons", onclick: move |_| files.write().go_up(), "arrow_back" }
-                i { class: "material-icons", "arrow_forward" }
-                h1 { "Files: ", files.read().current() }
+                i { class: "material-icons", onclick: move |_| files.write().walk_to_last_directory(), "arrow_back" }
+                i { class: "material-icons", onclick: move |_| files.write().enter_directory(1), "arrow_forward" }
+                h1 { files.read().current() }
                 span { }
                 i { class: "material-icons", onclick: move |_| close_application(cx), "cancel" }
             }
             main {
                 files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
                     let path_end = path.split('/').last().unwrap_or(path.as_str());
-                    let icon_type = if path_end.contains('.') {
+                    let icon_type = if path_end.ends_with(".zip") {
+                        "folder_zip"
+                    } else if path_end.contains('.') {
                         "description"
                     } else {
                         "folder"
@@ -47,8 +49,11 @@ fn app(cx: Scope) -> Element {
                         div {
                             class: "folder",
                             key: "{path}",
-                            i { class: "material-icons", ondblclick: move |_| files.write().enter_directory(directory_id), "{icon_type}" }
-                            h1 { ondblclick: move |_| files.write().enter_directory(directory_id) , "{path_end}" }
+                            div {
+                                ondblclick: move |_| files.write().enter_directory(directory_id),
+                                i { class: "material-icons", "{icon_type}" }
+                                h1 { "{path_end}" }
+                            }
                         }
                     )
                 }),
@@ -113,7 +118,7 @@ impl Files {
         }
     }
 
-    fn go_up(&mut self) {
+    fn walk_to_last_directory(&mut self) {
         if self.path_stack.len() > 1 {
             self.path_stack.pop();
         }
