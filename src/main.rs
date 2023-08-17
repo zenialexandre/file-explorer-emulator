@@ -1,7 +1,8 @@
+mod general_helper;
+mod window_helper;
+
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
-use image::GenericImageView;
-use dioxus_desktop::tao::window::Icon as TaoIcon;
 use std::sync::Mutex;
 
 #[macro_use]
@@ -11,7 +12,7 @@ lazy_static! {
     static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0);
 }
 
-struct Files {
+pub struct Files {
     path_stack: Vec<String>,
     path_names: Vec<String>,
     error: Option<String>,
@@ -23,7 +24,7 @@ fn main() {
         Config::default().with_window(WindowBuilder::new()
             .with_resizable(true).with_title("File Explorer Emulator")
             .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(1000.0, 800.0))
-            .with_window_icon(load_icon_by_path("src/images/icon/simple_face_icon.png"))
+            .with_window_icon(window_helper::load_icon_by_path("src/images/icon/simple_face_icon.png"))
             .with_theme(Option::from(dioxus_desktop::tao::window::Theme::Dark))
         )
     );
@@ -31,6 +32,8 @@ fn main() {
 
 fn app(cx: Scope) -> Element {
     let files = use_ref(cx, Files::new);
+    //let selected_record = use_state(cx, || false);
+    //let selected_style = if **selected_record { "#c6c6c6" } else { "" };
 
     cx.render(rsx! {
         div {
@@ -38,14 +41,14 @@ fn app(cx: Scope) -> Element {
             style { include_str!("./assets/styles.css") }
             header {
                 i { class: "material-icons", onclick: move |_| files.write().walk_to_last_directory(), "arrow_back" }
-                i { class: "material-icons", onclick: move |_|
-                    files.write().enter_directory(get_converted_usize_from_string(CLICKED_DIRECTORY_ID.lock().unwrap().to_string())), "arrow_forward" }
+                i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(&files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
                 h1 { files.read().current() }
                 span { }
-                i { class: "material-icons", onclick: move |_| close_application(cx), "cancel" }
+                i { class: "material-icons", onclick: move |_| window_helper::close_application(cx), "cancel" }
             }
             main {
                 files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
+                    //let inner_file_div = "";
                     let path_end = path.split('/').last().unwrap_or(path.as_str());
                     let icon_type = if path_end.ends_with(".zip") {
                         "folder_zip"
@@ -60,11 +63,14 @@ fn app(cx: Scope) -> Element {
                             onclick: move |event| {
                                 event.stop_propagation();
                                 *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
+                                //selected_record.set(true);
                             },
                             class: "folder",
                             key: "{path}",
+                            //background: selected_style,
+                            //"{inner_file_div}"
                             div {
-                                i { class: "material-icons", "{icon_type}" }
+                                i { class: "material-icons", "{icon_type}" },
                                 h1 { "{path_end}" }
                             }
                         }
@@ -81,25 +87,6 @@ fn app(cx: Scope) -> Element {
             }
         }
     })
-}
-
-fn load_icon_by_path(file_path: &str) -> Option<TaoIcon> {
-     return if let Ok(image) = image::open(file_path) {
-        let (width, height) = image.dimensions();
-        let rgba_data = image.to_rgba8().into_raw();
-        Some(TaoIcon::from_rgba(rgba_data, width, height).expect("Failed to load icon."))
-    } else {
-        None
-    }
-}
-
-fn close_application(cx: Scope) {
-    let window = dioxus_desktop::use_window(&cx);
-    window.close_window(window.id());
-}
-
-fn get_converted_usize_from_string(any_string: String) -> usize {
-    return any_string.parse().unwrap();
 }
 
 impl Files {
@@ -139,12 +126,14 @@ impl Files {
         if self.path_stack.len() > 1 {
             self.path_stack.pop();
         }
+        window_helper::clean_clicked_directory_id(&CLICKED_DIRECTORY_ID);
         self.reload_path_list();
     }
 
     fn enter_directory(&mut self, directory_id: usize) {
         let path = &self.path_names[directory_id];
         self.path_stack.push(path.clone());
+        window_helper::clean_clicked_directory_id(&CLICKED_DIRECTORY_ID);
         self.reload_path_list();
     }
 

@@ -32,6 +32,10 @@ main {
     cursor: pointer;
 }
 
+.folder.selected {
+    background-color: #c6c6c6;
+}
+
 .folder:hover h1 {
     background-color: #c6c6c6;
     opacity: 0.3;
