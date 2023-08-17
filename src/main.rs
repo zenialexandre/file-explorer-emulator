@@ -54,6 +54,8 @@ fn app(cx: Scope) -> Element {
                     let icon_type: String = window_helper::get_icon_type(path.to_string());
                     let path_metadata = std::fs::metadata(path.to_string());
                     let mut last_modification_date_utc: DateTime<Utc> = Default::default();
+
+                    #[allow(unused_assignments)]
                     let mut last_modification_date_formatted: String = String::new();
 
                     if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
@@ -77,9 +79,20 @@ fn app(cx: Scope) -> Element {
                             //background: selected_style,
                             //"{inner_file_div}"
                             div {
-                                i { class: "material-icons", "{icon_type}" },
+                                table {
+                                    class: "explorer-table",
+                                    tbody {
+                                        class: "explorer-tbody",
+                                        tr {
+                                            td { i { class: "material-icons", "{icon_type}" } },
+                                            td { class: "explorer-tbody-td", h1 { "{path_end}" } },
+                                            td { class: "explorer-tbody-td", h1 { "{last_modification_date_formatted}" } }
+                                        }
+                                    }
+                                }
+                                /*i { class: "material-icons", "{icon_type}" },
                                 h1 { class: "path-end", "{path_end}" },
-                                h1 { class: "last-modification-date", "{last_modification_date_formatted}" }
+                                h1 { class: "last-modification-date", "{last_modification_date_formatted}" }*/
                             }
                         }
                     )

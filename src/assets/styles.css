@@ -1,7 +1,7 @@
 * {
     margin: 0;
     padding: 0;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Rubik', sans-serif;
     user-select: none;
     transition: .2s all;
 }
@@ -16,8 +16,24 @@ main {
     flex-direction: column;
 }
 
+.explorer-table {
+    width: 50%;
+    border-collapse: separate;
+    border-spacing: 2px;
+    border: 0.5px solid #ccc;
+    margin-top: 20px;
+}
+
+.explorer-tbody {
+    padding: 1px;
+}
+
+.explorer-tbody td {
+    padding: 0px;
+}
+
 .folder * {
-    width: 100px;
+    width: 50px;
 }
 
 .folder {
@@ -54,10 +70,8 @@ main {
 }
 
 .folder h1 {
-    position: relative;
-    display: flex;
-    flex-flow: row;
-    top: -22px;
+    /*position: relative;*/
+    top: -20px;
     font-size: 15px;
     width: 400px;
     font-weight: 5px;
