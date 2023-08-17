@@ -1067,6 +1067,7 @@ dependencies = [
 name = "file-explorer-emulator"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "dioxus 0.4.0",
  "dioxus-desktop",
  "dioxus-free-icons",

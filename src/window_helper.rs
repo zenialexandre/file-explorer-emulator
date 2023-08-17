@@ -29,6 +29,16 @@ pub fn validate_clicked_id_on_click(files: &UseRef<Files>, clicked_directory_id:
     }
 }
 
+pub fn get_icon_type(path_end: &str) -> String {
+    return if path_end.ends_with(".zip") {
+        "folder_zip".to_string()
+    } else if path_end.contains('.') {
+        "description".to_string()
+    } else {
+        "folder".to_string()
+    }
+}
+
 pub fn clean_clicked_directory_id(clicked_directory_id: &Mutex<usize>) {
     let clean_up_value: usize = 0;
     *clicked_directory_id.lock().unwrap() = clean_up_value;

@@ -4,6 +4,7 @@ mod window_helper;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
 use std::sync::Mutex;
+use chrono::{DateTime, Utc};
 
 #[macro_use]
 extern crate lazy_static;
@@ -41,7 +42,7 @@ fn app(cx: Scope) -> Element {
             style { include_str!("./assets/styles.css") }
             header {
                 i { class: "material-icons", onclick: move |_| files.write().walk_to_last_directory(), "arrow_back" }
-                i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(&files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
+                i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
                 h1 { files.read().current() }
                 span { }
                 i { class: "material-icons", onclick: move |_| window_helper::close_application(cx), "cancel" }
@@ -50,13 +51,16 @@ fn app(cx: Scope) -> Element {
                 files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
                     //let inner_file_div = "";
                     let path_end = path.split('/').last().unwrap_or(path.as_str());
-                    let icon_type = if path_end.ends_with(".zip") {
-                        "folder_zip"
-                    } else if path_end.contains('.') {
-                        "description"
-                    } else {
-                        "folder"
-                    };
+                    let icon_type: String = window_helper::get_icon_type(path_end);
+                    let last_modification_date = std::fs::metadata(path.to_string());
+                    let mut last_modification_date_utc: DateTime<Utc> = Default::default();
+                    let mut last_modification_date_formatted: String = String::new();
+
+                    if let Ok(last_modification_date) = last_modification_date.expect("Modified").modified() {
+                        last_modification_date_utc = last_modification_date.into();
+                    }
+                    last_modification_date_formatted = last_modification_date_utc.format("%d/%m/%Y %H:%M:%S").to_string().split('.').next().expect("Next").to_string();
+
                     rsx! (
                         div {
                             ondblclick: move |_| files.write().enter_directory(directory_id),
@@ -71,11 +75,13 @@ fn app(cx: Scope) -> Element {
                             //"{inner_file_div}"
                             div {
                                 i { class: "material-icons", "{icon_type}" },
-                                h1 { "{path_end}" }
+                                h1 { class: "path-end", "{path_end}" },
+                                h1 { class: "last-modification-date", "{last_modification_date_formatted}" }
                             }
                         }
                     )
                 }),
+
                 files.read().error.as_ref().map(|err| {
                     rsx! (
                         div {

@@ -22,7 +22,7 @@ main {
 
 .folder {
     float: left;
-    width: auto;
+    width: 100px;
     height: auto;
     /* //padding: 20px; */
     margin-right: 50px;
@@ -55,10 +55,11 @@ main {
 
 .folder h1 {
     position: relative;
-    display: block;
+    display: flex;
+    flex-flow: row;
     top: -22px;
     font-size: 15px;
-    width: 300px;
+    width: 400px;
     font-weight: 5px;
     text-align: left;
     padding-left: 50px;
