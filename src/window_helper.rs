@@ -29,13 +29,22 @@ pub fn validate_clicked_id_on_click(files: &UseRef<Files>, clicked_directory_id:
     }
 }
 
-pub fn get_icon_type(path_end: &str) -> String {
-    return if path_end.ends_with(".zip") {
-        "folder_zip".to_string()
-    } else if path_end.contains('.') {
-        "description".to_string()
-    } else {
-        "folder".to_string()
+pub fn get_icon_type(path: String) -> String {
+    return match std::fs::metadata(path.clone()) {
+        Ok(metadata) => {
+            if path.ends_with(".zip") {
+                "folder_zip".to_string()
+            } else if metadata.is_dir() {
+                "folder".to_string()
+            } else if metadata.is_file() {
+                "description".to_string()
+            } else {
+                return "None".to_string();
+            }
+        }
+        Err(error) => {
+            return error.to_string();
+        }
     }
 }
 

@@ -51,19 +51,22 @@ fn app(cx: Scope) -> Element {
                 files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
                     //let inner_file_div = "";
                     let path_end = path.split('/').last().unwrap_or(path.as_str());
-                    let icon_type: String = window_helper::get_icon_type(path_end);
-                    let last_modification_date = std::fs::metadata(path.to_string());
+                    let icon_type: String = window_helper::get_icon_type(path.to_string());
+                    let path_metadata = std::fs::metadata(path.to_string());
                     let mut last_modification_date_utc: DateTime<Utc> = Default::default();
                     let mut last_modification_date_formatted: String = String::new();
 
-                    if let Ok(last_modification_date) = last_modification_date.expect("Modified").modified() {
-                        last_modification_date_utc = last_modification_date.into();
+                    if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
+                        last_modification_date_utc = path_metadata.into();
                     }
                     last_modification_date_formatted = last_modification_date_utc.format("%d/%m/%Y %H:%M:%S").to_string().split('.').next().expect("Next").to_string();
 
                     rsx! (
                         div {
-                            ondblclick: move |_| files.write().enter_directory(directory_id),
+                            ondblclick: move |event| {
+                                event.stop_propagation();
+                                files.write().enter_directory(directory_id);
+                            },
                             onclick: move |event| {
                                 event.stop_propagation();
                                 *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
