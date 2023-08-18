@@ -39,11 +39,12 @@ pub fn get_icon_type(path: String) -> String {
             } else if metadata.is_file() {
                 "description".to_string()
             } else {
-                return "None".to_string();
+                "None".to_string()
             }
         }
         Err(error) => {
-            return error.to_string();
+            println!("{}", error);
+            "".to_string()
         }
     }
 }
@@ -58,13 +59,26 @@ pub fn get_file_type_formatted(path: String) -> String {
             } else if metadata.is_symlink() {
                 "Symlink File".to_string()
             } else {
-                return "None".to_string()
+                "None".to_string()
             }
         }
         Err(error) => {
-            return error.to_string();
+            println!("{}", error);
+            "".to_string()
         }
     }
+}
+
+pub fn get_file_size(path: String) -> u64 {
+    return match std::fs::metadata(path.clone()) {
+        Ok(metadata) => {
+            (metadata.len() as f64 / 1000.00).ceil() as u64
+        },
+        Err(error) => {
+            println!("{}", error);
+            0
+        }
+    };
 }
 
 pub fn clean_clicked_directory_id(clicked_directory_id: &Mutex<usize>) {

@@ -33,8 +33,6 @@ fn main() {
 
 fn app(cx: Scope) -> Element {
     let files = use_ref(cx, Files::new);
-    //let selected_record = use_state(cx, || false);
-    //let selected_style = if **selected_record { "#c6c6c6" } else { "" };
 
     cx.render(rsx! {
         div {
@@ -49,13 +47,16 @@ fn app(cx: Scope) -> Element {
             }
             main {
                 files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
-                    //let inner_file_div = "";
                     let path_end = path.split('/').last().unwrap_or(path.as_str());
                     let icon_type: String = window_helper::get_icon_type(path.to_string());
                     let file_type: String = window_helper::get_file_type_formatted(path.to_string());
                     let path_metadata = std::fs::metadata(path.to_string());
-                    //let file_size: String = path_metadata.len().to_string();
+                    let mut file_size: u64 = window_helper::get_file_size(path.to_string());
                     let mut last_modification_date_utc: DateTime<Utc> = Default::default();
+
+                    if file_type == "File Folder" {
+                        file_size = 0;
+                    }
 
                     #[allow(unused_assignments)]
                     let mut last_modification_date_formatted: String = String::new();
@@ -74,12 +75,9 @@ fn app(cx: Scope) -> Element {
                             onclick: move |event| {
                                 event.stop_propagation();
                                 *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
-                                //selected_record.set(true);
                             },
                             class: "folder",
                             key: "{path}",
-                            //background: selected_style,
-                            //"{inner_file_div}"
                             div {
                                 table {
                                     class: "explorer-table",
@@ -90,13 +88,10 @@ fn app(cx: Scope) -> Element {
                                             td { class: "explorer-tbody-td", h1 { "{path_end}" } },
                                             td { class: "explorer-tbody-td", h1 { "{last_modification_date_formatted}" } },
                                             td { class: "explorer-tbody-td", h1 { "{file_type}" } },
-                                           // td { class: "explorer-tbody-td", h1 { "{file_size}" } }
+                                            td { class: "explorer-tbody-td", h1 { "{file_size} KB" } }
                                         }
                                     }
                                 }
-                                /*i { class: "material-icons", "{icon_type}" },
-                                h1 { class: "path-end", "{path_end}" },
-                                h1 { class: "last-modification-date", "{last_modification_date_formatted}" }*/
                             }
                         }
                     )

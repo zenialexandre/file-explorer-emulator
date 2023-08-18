@@ -17,7 +17,8 @@ main {
 }
 
 .explorer-table {
-    width: 50%;
+    height: auto;
+    width: auto;
     border-collapse: separate;
     border-spacing: 2px;
     border: 0.5px solid #ccc;
