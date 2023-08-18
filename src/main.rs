@@ -22,7 +22,7 @@ pub struct Files {
 fn main() {
     dioxus_desktop::launch_cfg(
         app,
-        Config::default().with_window(WindowBuilder::new()
+        Config::default().with_disable_context_menu(false).with_window(WindowBuilder::new()
             .with_resizable(true).with_title("File Explorer Emulator")
             .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(1000.0, 800.0))
             .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cat-funny.ico"))
@@ -38,6 +38,7 @@ fn app(cx: Scope) -> Element {
         div {
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
             style { include_str!("./assets/styles.css") }
+            script { "./src/scripts/ui.js" }
             header {
                 i { class: "material-icons", onclick: move |_| files.write().walk_to_last_directory(), "arrow_back" }
                 i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
