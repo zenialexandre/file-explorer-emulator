@@ -25,7 +25,7 @@ fn main() {
         Config::default().with_window(WindowBuilder::new()
             .with_resizable(true).with_title("File Explorer Emulator")
             .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(1000.0, 800.0))
-            .with_window_icon(window_helper::load_icon_by_path("src/images/icon/simple_face_icon.png"))
+            .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cat-funny.ico"))
             .with_theme(Option::from(dioxus_desktop::tao::window::Theme::Dark))
         )
     );
