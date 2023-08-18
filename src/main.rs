@@ -52,7 +52,9 @@ fn app(cx: Scope) -> Element {
                     //let inner_file_div = "";
                     let path_end = path.split('/').last().unwrap_or(path.as_str());
                     let icon_type: String = window_helper::get_icon_type(path.to_string());
+                    let file_type: String = window_helper::get_file_type_formatted(path.to_string());
                     let path_metadata = std::fs::metadata(path.to_string());
+                    //let file_size: String = path_metadata.len().to_string();
                     let mut last_modification_date_utc: DateTime<Utc> = Default::default();
 
                     #[allow(unused_assignments)]
@@ -86,7 +88,9 @@ fn app(cx: Scope) -> Element {
                                         tr {
                                             td { i { class: "material-icons", "{icon_type}" } },
                                             td { class: "explorer-tbody-td", h1 { "{path_end}" } },
-                                            td { class: "explorer-tbody-td", h1 { "{last_modification_date_formatted}" } }
+                                            td { class: "explorer-tbody-td", h1 { "{last_modification_date_formatted}" } },
+                                            td { class: "explorer-tbody-td", h1 { "{file_type}" } },
+                                           // td { class: "explorer-tbody-td", h1 { "{file_size}" } }
                                         }
                                     }
                                 }

@@ -48,6 +48,25 @@ pub fn get_icon_type(path: String) -> String {
     }
 }
 
+pub fn get_file_type_formatted(path: String) -> String {
+    return match std::fs::metadata(path.clone()) {
+        Ok(metadata) => {
+            if metadata.is_dir() {
+                "File Folder".to_string()
+            } else if metadata.is_file() {
+                "Regular File".to_string()
+            } else if metadata.is_symlink() {
+                "Symlink File".to_string()
+            } else {
+                return "None".to_string()
+            }
+        }
+        Err(error) => {
+            return error.to_string();
+        }
+    }
+}
+
 pub fn clean_clicked_directory_id(clicked_directory_id: &Mutex<usize>) {
     let clean_up_value: usize = 0;
     *clicked_directory_id.lock().unwrap() = clean_up_value;
