@@ -29,6 +29,12 @@ pub fn validate_clicked_id_on_click(files: &UseRef<Files>, clicked_directory_id:
     }
 }
 
+pub fn validate_on_keydown_features(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>, event: Event<KeyboardData>) {
+    if event.code() as u64 == 9 {
+        println!("Gotcha");
+    }
+}
+
 pub fn get_icon_type(path: String) -> String {
     return match std::fs::metadata(path.clone()) {
         Ok(metadata) => {

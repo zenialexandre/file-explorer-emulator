@@ -80,6 +80,10 @@ fn app(cx: Scope) -> Element {
                             class: "folder",
                             key: "{path}",
                             div {
+                                onkeydown: move |event| {
+                                    println!("onkeydown");
+                                    window_helper::validate_on_keydown_features(files, &CLICKED_DIRECTORY_ID, event);
+                                },
                                 table {
                                     class: "explorer-table",
                                     tbody {
