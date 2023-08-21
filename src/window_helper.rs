@@ -29,12 +29,6 @@ pub fn validate_clicked_id_on_click(files: &UseRef<Files>, clicked_directory_id:
     }
 }
 
-pub fn validate_on_keydown_features(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>, event: Event<KeyboardData>) {
-    if event.code() as u64 == 9 {
-        println!("Gotcha");
-    }
-}
-
 pub fn get_icon_type(path: String) -> String {
     return match std::fs::metadata(path.clone()) {
         Ok(metadata) => {
@@ -87,7 +81,8 @@ pub fn get_file_size(path: String) -> u64 {
     };
 }
 
-pub fn clean_clicked_directory_id(clicked_directory_id: &Mutex<usize>) {
-    let clean_up_value: usize = 0;
-    *clicked_directory_id.lock().unwrap() = clean_up_value;
+pub fn clean_lazy_static_values(file_path: &Mutex<String>, clicked_directory_id: &Mutex<usize>) {
+    let clean_up_values = vec!["", "0"];
+    *file_path.lock().unwrap() = clean_up_values[0].to_string();
+    *clicked_directory_id.lock().unwrap() = general_helper::get_converted_usize_from_string(clean_up_values[1].to_string());
 }

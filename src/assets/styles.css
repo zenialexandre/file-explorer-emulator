@@ -49,9 +49,11 @@ main {
     cursor: pointer;
 }
 
-.folder.selected {
+/*.folder.selected {
     background-color: #c6c6c6;
-}
+    opacity: 0.3;
+    border-radius: 5px;
+}*/
 
 .folder:hover h1 {
     background-color: #c6c6c6;

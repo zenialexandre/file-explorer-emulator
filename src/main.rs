@@ -1,15 +1,19 @@
 mod general_helper;
 mod window_helper;
+mod shortcut_helper;
 
+use std::rc::Rc;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
 use std::sync::Mutex;
 use chrono::{DateTime, Utc};
+use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 
 #[macro_use]
 extern crate lazy_static;
 
 lazy_static! {
+    static ref FILE_PATH: Mutex<String> = Mutex::new("".to_string());
     static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0);
 }
 
@@ -22,17 +26,19 @@ pub struct Files {
 fn main() {
     dioxus_desktop::launch_cfg(
         app,
-        Config::default().with_disable_context_menu(false).with_window(WindowBuilder::new()
+        Config::default().with_window(WindowBuilder::new()
             .with_resizable(true).with_title("File Explorer Emulator")
             .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(1000.0, 800.0))
-            .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cat-funny.ico"))
+            .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
             .with_theme(Option::from(dioxus_desktop::tao::window::Theme::Dark))
+            .with_focused(true)
         )
     );
 }
 
 fn app(cx: Scope) -> Element {
     let files = use_ref(cx, Files::new);
+    //shortcut_helper::create_global_shortcuts(&cx, &FILE_PATH, &CLICKED_DIRECTORY_ID);
 
     cx.render(rsx! {
         div {
@@ -69,32 +75,23 @@ fn app(cx: Scope) -> Element {
 
                     rsx! (
                         div {
-                            ondblclick: move |event| {
-                                event.stop_propagation();
-                                files.write().enter_directory(directory_id);
-                            },
-                            onclick: move |event| {
-                                event.stop_propagation();
+                            ondblclick: move |_| { files.write().enter_directory(directory_id); },
+                            onclick: move |_| {
+                                //*FILE_PATH.lock().unwrap() = path.to_string();
                                 *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
                             },
                             class: "folder",
                             key: "{path}",
-                            div {
-                                onkeydown: move |event| {
-                                    println!("onkeydown");
-                                    window_helper::validate_on_keydown_features(files, &CLICKED_DIRECTORY_ID, event);
-                                },
-                                table {
-                                    class: "explorer-table",
-                                    tbody {
-                                        class: "explorer-tbody",
-                                        tr {
-                                            td { i { class: "material-icons", "{icon_type}" } },
-                                            td { class: "explorer-tbody-td", h1 { "{path_end}" } },
-                                            td { class: "explorer-tbody-td", h1 { "{last_modification_date_formatted}" } },
-                                            td { class: "explorer-tbody-td", h1 { "{file_type}" } },
-                                            td { class: "explorer-tbody-td", h1 { "{file_size} KB" } }
-                                        }
+                            table {
+                                class: "explorer-table",
+                                tbody {
+                                    class: "explorer-tbody",
+                                    tr {
+                                        td { i { class: "material-icons", "{icon_type}" } },
+                                        td { class: "explorer-tbody-td", h1 { "{path_end}" } },
+                                        td { class: "explorer-tbody-td", h1 { "{last_modification_date_formatted}" } },
+                                        td { class: "explorer-tbody-td", h1 { "{file_type}" } },
+                                        td { class: "explorer-tbody-td", h1 { "{file_size} KB" } }
                                     }
                                 }
                             }
@@ -152,14 +149,14 @@ impl Files {
         if self.path_stack.len() > 1 {
             self.path_stack.pop();
         }
-        window_helper::clean_clicked_directory_id(&CLICKED_DIRECTORY_ID);
+        window_helper::clean_lazy_static_values(&FILE_PATH, &CLICKED_DIRECTORY_ID);
         self.reload_path_list();
     }
 
     fn enter_directory(&mut self, directory_id: usize) {
         let path = &self.path_names[directory_id];
         self.path_stack.push(path.clone());
-        window_helper::clean_clicked_directory_id(&CLICKED_DIRECTORY_ID);
+        window_helper::clean_lazy_static_values(&FILE_PATH, &CLICKED_DIRECTORY_ID);
         self.reload_path_list();
     }
 
