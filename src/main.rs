@@ -1,20 +1,16 @@
-mod general_helper;
 mod window_helper;
 mod shortcut_helper;
 
-use std::rc::Rc;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
 use std::sync::Mutex;
 use chrono::{DateTime, Utc};
-use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 
 #[macro_use]
 extern crate lazy_static;
 
 lazy_static! {
-    static ref FILE_PATH: Mutex<String> = Mutex::new("".to_string());
-    static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0);
+    pub static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0);
 }
 
 pub struct Files {
@@ -38,7 +34,7 @@ fn main() {
 
 fn app(cx: Scope) -> Element {
     let files = use_ref(cx, Files::new);
-    //shortcut_helper::create_global_shortcuts(&cx, &FILE_PATH, &CLICKED_DIRECTORY_ID);
+    shortcut_helper::create_global_shortcuts(&cx, &files);
 
     cx.render(rsx! {
         div {
@@ -60,24 +56,21 @@ fn app(cx: Scope) -> Element {
                     let path_metadata = std::fs::metadata(path.to_string());
                     let mut file_size: u64 = window_helper::get_file_size(path.to_string());
                     let mut last_modification_date_utc: DateTime<Utc> = Default::default();
+                    let mut _last_modification_date_formatted: String = String::new();
 
                     if file_type == "File Folder" {
                         file_size = 0;
                     }
 
-                    #[allow(unused_assignments)]
-                    let mut last_modification_date_formatted: String = String::new();
-
                     if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
                         last_modification_date_utc = path_metadata.into();
                     }
-                    last_modification_date_formatted = last_modification_date_utc.format("%d/%m/%Y %H:%M:%S").to_string().split('.').next().expect("Next").to_string();
+                    _last_modification_date_formatted = last_modification_date_utc.format("%d/%m/%Y %H:%M:%S").to_string().split('.').next().expect("Next").to_string();
 
                     rsx! (
                         div {
                             ondblclick: move |_| { files.write().enter_directory(directory_id); },
                             onclick: move |_| {
-                                //*FILE_PATH.lock().unwrap() = path.to_string();
                                 *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
                             },
                             class: "folder",
@@ -89,7 +82,7 @@ fn app(cx: Scope) -> Element {
                                     tr {
                                         td { i { class: "material-icons", "{icon_type}" } },
                                         td { class: "explorer-tbody-td", h1 { "{path_end}" } },
-                                        td { class: "explorer-tbody-td", h1 { "{last_modification_date_formatted}" } },
+                                        td { class: "explorer-tbody-td", h1 { "{_last_modification_date_formatted}" } },
                                         td { class: "explorer-tbody-td", h1 { "{file_type}" } },
                                         td { class: "explorer-tbody-td", h1 { "{file_size} KB" } }
                                     }
@@ -149,14 +142,14 @@ impl Files {
         if self.path_stack.len() > 1 {
             self.path_stack.pop();
         }
-        window_helper::clean_lazy_static_values(&FILE_PATH, &CLICKED_DIRECTORY_ID);
+        window_helper::clean_lazy_static_value(&CLICKED_DIRECTORY_ID);
         self.reload_path_list();
     }
 
     fn enter_directory(&mut self, directory_id: usize) {
         let path = &self.path_names[directory_id];
         self.path_stack.push(path.clone());
-        window_helper::clean_lazy_static_values(&FILE_PATH, &CLICKED_DIRECTORY_ID);
+        window_helper::clean_lazy_static_value(&CLICKED_DIRECTORY_ID);
         self.reload_path_list();
     }
 
