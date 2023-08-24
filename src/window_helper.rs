@@ -84,6 +84,6 @@ pub fn clean_lazy_static_value(clicked_directory_id: &Mutex<usize>) {
     *clicked_directory_id.lock().unwrap() = "0".parse().unwrap();
 }
 
-fn get_converted_usize_from_string(any_string: String) -> usize {
+pub fn get_converted_usize_from_string(any_string: String) -> usize {
     return any_string.parse().unwrap();
 }

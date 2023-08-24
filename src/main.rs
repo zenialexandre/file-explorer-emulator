@@ -1,5 +1,6 @@
 mod window_helper;
 mod shortcut_helper;
+mod keydown_helper;
 
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
@@ -10,7 +11,7 @@ use chrono::{DateTime, Utc};
 extern crate lazy_static;
 
 lazy_static! {
-    pub static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0);
+    static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0);
 }
 
 pub struct Files {
@@ -34,13 +35,11 @@ fn main() {
 
 fn app(cx: Scope) -> Element {
     let files = use_ref(cx, Files::new);
-    shortcut_helper::create_global_shortcuts(&cx, &files);
 
     cx.render(rsx! {
         div {
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
             style { include_str!("./assets/styles.css") }
-            script { "./src/scripts/ui.js" }
             header {
                 i { class: "material-icons", onclick: move |_| files.write().walk_to_last_directory(), "arrow_back" }
                 i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
@@ -69,10 +68,6 @@ fn app(cx: Scope) -> Element {
 
                     rsx! (
                         div {
-                            ondblclick: move |_| { files.write().enter_directory(directory_id); },
-                            onclick: move |_| {
-                                *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
-                            },
                             class: "folder",
                             key: "{path}",
                             table {
@@ -80,6 +75,12 @@ fn app(cx: Scope) -> Element {
                                 tbody {
                                     class: "explorer-tbody",
                                     tr {
+                                        tabindex: "0",
+                                        onkeydown: move |keydown_event| {
+                                            keydown_helper::handle_keydown_event(keydown_event, files.read().current().to_string(), &CLICKED_DIRECTORY_ID);
+                                        },
+                                        ondblclick: move |_| { files.write().enter_directory(directory_id); },
+                                        onclick: move |_| { *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id; },
                                         td { i { class: "material-icons", "{icon_type}" } },
                                         td { class: "explorer-tbody-td", h1 { "{path_end}" } },
                                         td { class: "explorer-tbody-td", h1 { "{_last_modification_date_formatted}" } },

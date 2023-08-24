@@ -1,9 +1,9 @@
-use std::sync::Mutex;
+/*use std::sync::Mutex;
 use dioxus::prelude::{Scope, UseRef};
 use crate::{CLICKED_DIRECTORY_ID, Files};
 
 pub fn create_global_shortcuts(context: &Scope, files: &UseRef<Files>) {
-    let path = &files.read().path_names[get_converted_usize_from_string(CLICKED_DIRECTORY_ID.lock().unwrap().to_string())];
+    let path = files.read().path_names[get_converted_usize_from_string(CLICKED_DIRECTORY_ID.lock().unwrap().to_string())];
 
     dioxus_desktop::use_global_shortcut(context, "ctrl+r", {
         move || {
@@ -21,5 +21,7 @@ fn rename_action(path: &String, clicked_directory_id: &Mutex<usize>) {
 }
 
 fn get_converted_usize_from_string(any_string: String) -> usize {
-    return any_string.parse().unwrap();
-}
+    any_string.parse().unwrap()
+}*/
+
+// TODO
