@@ -1,24 +1,41 @@
-use std::sync::Mutex;
+use std::sync::{Mutex};
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
+use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 
-use crate::Files;
+use crate::{Files};
 use crate::window_helper::get_converted_usize_from_string;
+use crate::window_helper::load_icon_by_path;
+use crate::window_helper::close_application;
+
+lazy_static! {
+    static ref IS_RENAME_CONFIRMED: Mutex<bool> = Mutex::new(false);
+}
+
+lazy_static! {
+    static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string());
+}
 
 pub fn rename_event(context: Scope, files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) {
     fire_rename_popup(context);
-    let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
-    let selected_full_path: String = files.read().path_names[converted_clicked_directory_id].to_string();
-    let selected_splitted_path: Vec<&str> = selected_full_path.split_terminator("\\").collect();
-    let file_or_dir_new_name: String = "bomdiateste".to_string();
-    let selected_new_path: String = get_restructured_path(&selected_full_path, selected_splitted_path, &file_or_dir_new_name);
+    let is_rename_confirmed_internal: bool = IS_RENAME_CONFIRMED.lock().unwrap().clone();
 
-    match std::fs::rename(&selected_full_path, &selected_new_path) {
-        Ok(_) => {
-            let _ = std::mem::replace(&mut files.write().path_names[converted_clicked_directory_id], format!("{}", selected_new_path));
-            files.write().reload_path_list();
-        },
-        Err(error) => panic!("{}", error)
+    println!("{}", is_rename_confirmed_internal.to_string());
+
+    if is_rename_confirmed_internal == true {
+        let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
+        let selected_full_path: String = files.read().path_names[converted_clicked_directory_id].to_string();
+        let selected_splitted_path: Vec<&str> = selected_full_path.split_terminator("\\").collect();
+        let file_or_dir_new_name: String = NEW_FILE_OR_DIR_NAME.lock().unwrap().clone();
+        let selected_new_path: String = get_restructured_path(&selected_full_path, selected_splitted_path, &file_or_dir_new_name);
+
+        match std::fs::rename(&selected_full_path, &selected_new_path) {
+            Ok(_) => {
+                let _ = std::mem::replace(&mut files.write().path_names[converted_clicked_directory_id], format!("{}", selected_new_path));
+                files.write().reload_path_list();
+            },
+            Err(error) => panic!("{}", error)
+        }
     }
 }
 
@@ -26,12 +43,43 @@ fn fire_rename_popup(context: Scope) {
     let window = dioxus_desktop::use_window(context);
     let dom = VirtualDom::new(rename_popup);
     window.new_window(dom, Config::default()
-        .with_window(WindowBuilder::new()));
+        .with_window(WindowBuilder::new()
+            .with_resizable(false).with_focused(true)
+            .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(true)
+            .with_window_icon(load_icon_by_path("src/images/icon/cool_circle.png"))
+            .with_title("Rename").with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(600.0, 300.0)))
+    );
 }
 
 fn rename_popup(context: Scope) -> Element {
     context.render(rsx! {
-        div { "popup" }
+        div {
+            link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
+            style { include_str!("./assets/rename_popup.css") }
+
+            div {
+                h1 { "Enter the new directory/file name: " },
+                input {
+                    oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() },
+                    r#type: "text",
+                    placeholder: "Directory/File new name"
+                },
+                button {
+                    onclick: move |_| {
+                        *IS_RENAME_CONFIRMED.lock().unwrap() = false;
+                        close_application(context);
+                    },
+                    "Cancel"
+                },
+                button {
+                    onclick: move |_| {
+                        *IS_RENAME_CONFIRMED.lock().unwrap() = true;
+                        close_application(context);
+                    },
+                    "Confirm"
+                }
+            }
+        }
     })
 }
 
