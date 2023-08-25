@@ -1,6 +1,6 @@
 mod window_helper;
-mod shortcut_helper;
 mod keydown_helper;
+mod rename_operation;
 
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
@@ -77,7 +77,7 @@ fn app(cx: Scope) -> Element {
                                     tr {
                                         tabindex: "0",
                                         onkeydown: move |keydown_event| {
-                                            keydown_helper::handle_keydown_event(keydown_event, files, &CLICKED_DIRECTORY_ID);
+                                            keydown_helper::handle_keydown_event(cx, keydown_event, files, &CLICKED_DIRECTORY_ID);
                                         },
                                         ondblclick: move |_| { files.write().enter_directory(directory_id); },
                                         onclick: move |_| { *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id; },
