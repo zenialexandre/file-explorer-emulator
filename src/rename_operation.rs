@@ -58,25 +58,32 @@ fn rename_popup(context: Scope) -> Element {
             style { include_str!("./assets/rename_popup.css") }
 
             div {
-                h1 { "Enter the new directory/file name: " },
-                input {
-                    oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() },
-                    r#type: "text",
-                    placeholder: "Directory/File new name"
-                },
-                button {
-                    onclick: move |_| {
-                        *IS_RENAME_CONFIRMED.lock().unwrap() = false;
-                        close_application(context);
+                class: "central-div",
+                h1 { "Enter new directory/file name: " },
+                div {
+                    class: "forms-div",
+                    input {
+                        oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() },
+                        r#type: "text",
+                        placeholder: "Directory/File new name"
                     },
-                    "Cancel"
-                },
-                button {
-                    onclick: move |_| {
-                        *IS_RENAME_CONFIRMED.lock().unwrap() = true;
-                        close_application(context);
+                    i {
+                        class: "material-icons",
+                        onclick: move |_| {
+                            *IS_RENAME_CONFIRMED.lock().unwrap() = false;
+                            close_application(context);
+                        },
+                        "cancel"
                     },
-                    "Confirm"
+                    span { },
+                    i {
+                        class: "material-icons",
+                        onclick: move |_| {
+                            *IS_RENAME_CONFIRMED.lock().unwrap() = true;
+                            close_application(context);
+                        },
+                        "check_circle"
+                    }
                 }
             }
         }

@@ -1,0 +1,32 @@
+* {
+    background-color: #dccbf7;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.central-div {
+    font-family: 'Rubik', sans-serif;
+    padding-top: 50px;
+    padding: 10px 50px;
+}
+
+.central-div h1 {
+    text-align: center;
+    font-weight: 5px;
+    font-size: 30px;
+}
+
+.forms-div {
+    display: block;
+    align-items: center;
+}
+
+.forms-div input {
+    border-radius: 5px;
+
+}
+
+.material-icons {
+    cursor: pointer;
+}
