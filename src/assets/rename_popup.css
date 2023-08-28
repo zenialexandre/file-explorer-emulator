@@ -1,14 +1,14 @@
 * {
     background-color: #dccbf7;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 .central-div {
     font-family: 'Rubik', sans-serif;
     padding-top: 50px;
     padding: 10px 50px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .central-div h1 {
@@ -19,14 +19,17 @@
 
 .forms-div {
     display: block;
-    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 100px;
 }
 
 .forms-div input {
+    width: 200px;
     border-radius: 5px;
-
 }
 
 .material-icons {
     cursor: pointer;
+    padding: 5px;
 }

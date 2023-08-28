@@ -9,7 +9,11 @@ use crate::window_helper::load_icon_by_path;
 use crate::window_helper::close_application;
 
 lazy_static! {
-    static ref IS_RENAME_CONFIRMED: Mutex<bool> = Mutex::new(false);
+    static ref FILES_VECTOR: Mutex<&'static UseRef<Files>> = Mutex::from(Files::new);
+}
+
+lazy_static! {
+    static ref CLICKED_DIRECTORY_ID_VECTOR: Mutex<Vec<&'static Mutex<usize>>> = Mutex::new(vec![]);
 }
 
 lazy_static! {
@@ -17,26 +21,9 @@ lazy_static! {
 }
 
 pub fn rename_event(context: Scope, files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) {
+    *FILES_VECTOR.lock().unwrap() = files;
+    *CLICKED_DIRECTORY_ID_VECTOR.lock().unwrap().push(clicked_directory_id);
     fire_rename_popup(context);
-    let is_rename_confirmed_internal: bool = IS_RENAME_CONFIRMED.lock().unwrap().clone();
-
-    println!("{}", is_rename_confirmed_internal.to_string());
-
-    if is_rename_confirmed_internal == true {
-        let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
-        let selected_full_path: String = files.read().path_names[converted_clicked_directory_id].to_string();
-        let selected_splitted_path: Vec<&str> = selected_full_path.split_terminator("\\").collect();
-        let file_or_dir_new_name: String = NEW_FILE_OR_DIR_NAME.lock().unwrap().clone();
-        let selected_new_path: String = get_restructured_path(&selected_full_path, selected_splitted_path, &file_or_dir_new_name);
-
-        match std::fs::rename(&selected_full_path, &selected_new_path) {
-            Ok(_) => {
-                let _ = std::mem::replace(&mut files.write().path_names[converted_clicked_directory_id], format!("{}", selected_new_path));
-                files.write().reload_path_list();
-            },
-            Err(error) => panic!("{}", error)
-        }
-    }
 }
 
 fn fire_rename_popup(context: Scope) {
@@ -54,7 +41,7 @@ fn fire_rename_popup(context: Scope) {
 fn rename_popup(context: Scope) -> Element {
     context.render(rsx! {
         div {
-            link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
+            link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
             style { include_str!("./assets/rename_popup.css") }
 
             div {
@@ -67,20 +54,21 @@ fn rename_popup(context: Scope) -> Element {
                         r#type: "text",
                         placeholder: "Directory/File new name"
                     },
+                    br {}
                     i {
                         class: "material-icons",
                         onclick: move |_| {
-                            *IS_RENAME_CONFIRMED.lock().unwrap() = false;
                             close_application(context);
                         },
                         "cancel"
                     },
-                    span { },
                     i {
                         class: "material-icons",
                         onclick: move |_| {
-                            *IS_RENAME_CONFIRMED.lock().unwrap() = true;
-                            close_application(context);
+                            if *NEW_FILE_OR_DIR_NAME.lock().unwrap().trim() != "" {
+                                execute_rename_operation();
+                                close_application(context);
+                            }
                         },
                         "check_circle"
                     }
@@ -88,6 +76,25 @@ fn rename_popup(context: Scope) -> Element {
             }
         }
     })
+}
+
+fn execute_rename_operation() {
+    let files: &UseRef<Files> = *FILES_VECTOR.lock().unwrap().get(0);
+    let clicked_directory_id: Mutex<usize> = *CLICKED_DIRECTORY_ID_VECTOR.lock().unwrap().get(0);
+
+    let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
+    let selected_full_path: String = files.read().path_names[converted_clicked_directory_id].to_string();
+    let selected_splitted_path: Vec<&str> = selected_full_path.split_terminator("\\").collect();
+    let file_or_dir_new_name: String = NEW_FILE_OR_DIR_NAME.lock().unwrap().clone();
+    let selected_new_path: String = get_restructured_path(&selected_full_path, selected_splitted_path, &file_or_dir_new_name);
+
+    match std::fs::rename(&selected_full_path, &selected_new_path) {
+        Ok(_) => {
+            let _ = std::mem::replace(&mut files.write().path_names[converted_clicked_directory_id], format!("{}", selected_new_path));
+            files.write().reload_path_list();
+        },
+        Err(error) => panic!("{}", error)
+    }
 }
 
 fn get_restructured_path<'a>(selected_full_path: &'a String, selected_splitted_path: Vec<&'a str>, file_or_dir_new_name: &'a String) -> String {
