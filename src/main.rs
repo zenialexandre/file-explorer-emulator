@@ -3,9 +3,11 @@ mod keydown_helper;
 mod rename_operation;
 
 use dioxus::prelude::*;
-use dioxus_desktop::{Config, WindowBuilder};
+use dioxus_desktop::{Config, DesktopService, WindowBuilder};
+use dioxus::html::input_data::keyboard_types::{Code, Modifiers};
 use std::sync::Mutex;
 use chrono::{DateTime, Utc};
+use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 
 #[macro_use]
 extern crate lazy_static;
@@ -14,10 +16,20 @@ lazy_static! {
     static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0);
 }
 
-pub struct Files {
+lazy_static! {
+    static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string());
+}
+
+struct Files {
     path_stack: Vec<String>,
     path_names: Vec<String>,
     error: Option<String>,
+}
+
+#[derive(Props)]
+struct RenameProps<'a> {
+    files_props: &'a UseRef<Files>,
+    window_props: &'a DesktopService,
 }
 
 fn main() {
@@ -77,7 +89,9 @@ fn app(cx: Scope) -> Element {
                                     tr {
                                         tabindex: "0",
                                         onkeydown: move |keydown_event| {
-                                            keydown_helper::handle_keydown_event(cx, keydown_event, files, &CLICKED_DIRECTORY_ID);
+                                            if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
+                                                create_rename_popup(&cx, files);
+                                            }
                                         },
                                         ondblclick: move |_| { files.write().enter_directory(directory_id); },
                                         onclick: move |_| { *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id; },
@@ -101,6 +115,62 @@ fn app(cx: Scope) -> Element {
                         }
                     )
                 })
+            }
+        }
+    })
+}
+
+fn create_rename_popup<'a>(context: &'static Scope, files: &'static UseRef<Files>) {
+    let window = dioxus_desktop::use_window(context);
+    let rename_props = RenameProps {
+        files_props: files,
+        window_props: window,
+    };
+
+    let dom = VirtualDom::new_with_props(rename_popup, rename_props);
+    window.new_window(dom, Config::default()
+        .with_window(WindowBuilder::new()
+            .with_resizable(false).with_focused(true)
+            .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(true)
+            .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
+            .with_title("Rename").with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(600.0, 300.0)))
+    );
+}
+
+fn rename_popup<'a>(context: Scope<'a, RenameProps>) -> Element<'a> {
+    context.render(rsx! {
+        div {
+            link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
+            style { include_str!("./assets/rename_popup.css") }
+            div {
+                class: "central-div",
+                h1 { "Enter new directory/file name: " },
+                div {
+                    class: "forms-div",
+                    input {
+                        oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() },
+                        r#type: "text",
+                        placeholder: "Directory/File new name"
+                    },
+                    br {}
+                    i {
+                        class: "material-icons",
+                        onclick: move |_| {
+                            context.props.window_props.close();
+                        },
+                        "cancel"
+                    },
+                    i {
+                        class: "material-icons",
+                        onclick: move |_| {
+                            if *NEW_FILE_OR_DIR_NAME.lock().unwrap().trim() != "".to_string() {
+                                rename_operation::execute_rename_operation(context.props.files_props, &CLICKED_DIRECTORY_ID, &NEW_FILE_OR_DIR_NAME);
+                                context.props.window_props.close();
+                            }
+                        },
+                        "check_circle"
+                    }
+                }
             }
         }
     })
