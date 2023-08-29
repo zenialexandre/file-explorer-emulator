@@ -3,7 +3,7 @@ mod keydown_helper;
 mod rename_operation;
 
 use dioxus::prelude::*;
-use dioxus_desktop::{Config, DesktopContext, WindowBuilder};
+use dioxus_desktop::{Config, WindowBuilder};
 use dioxus::html::input_data::keyboard_types::{Code, Modifiers};
 use std::sync::{Mutex};
 use chrono::{DateTime, Utc};
@@ -20,15 +20,10 @@ lazy_static! {
     static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string());
 }
 
-struct Files {
+pub struct Files {
     path_stack: Vec<String>,
     path_names: Vec<String>,
     error: Option<String>,
-}
-
-#[derive(Props)]
-struct RenameProps<'a> {
-    files_props: &'a UseRef<Files>,
 }
 
 fn main() {
@@ -45,7 +40,7 @@ fn main() {
 }
 
 fn app(cx: Scope) -> Element {
-    let files = use_ref(cx, Files::new);
+    let files: &UseRef<Files> = use_ref(cx, Files::new);
 
     cx.render(rsx! {
         div {
@@ -89,9 +84,8 @@ fn app(cx: Scope) -> Element {
                                         tabindex: "0",
                                         onkeydown: move |keydown_event| {
                                             if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
-                                                let rename_props = RenameProps::new(files);
-                                                let dom = VirtualDom::new_with_props(rename_popup, rename_props);
-                                                let _ = dioxus_desktop::use_window(cx).new_window(dom, Config::default()
+                                                let dom: VirtualDom = VirtualDom::new_with_props(rename_popup, rename_popupProps { files_props: files });
+                                                dioxus_desktop::use_window(cx).new_window(dom, Config::default()
                                                     .with_window(WindowBuilder::new()
                                                         .with_resizable(false).with_focused(true)
                                                         .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(true)
@@ -127,8 +121,9 @@ fn app(cx: Scope) -> Element {
     })
 }
 
-fn rename_popup<'a>(context: Scope<'a, RenameProps>) -> Element<'a> {
-    context.render(rsx! {
+#[inline_props]
+fn rename_popup<'a>(cx: Scope, files_props: &'a UseRef<Files>) -> Element {
+    cx.render(rsx! {
         div {
             link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
             style { include_str!("./assets/rename_popup.css") }
@@ -146,7 +141,7 @@ fn rename_popup<'a>(context: Scope<'a, RenameProps>) -> Element<'a> {
                     i {
                         class: "material-icons",
                         onclick: move |_| {
-                            let _ = dioxus_desktop::use_window(context).close();
+                            dioxus_desktop::use_window(cx).close();
                         },
                         "cancel"
                     },
@@ -154,8 +149,8 @@ fn rename_popup<'a>(context: Scope<'a, RenameProps>) -> Element<'a> {
                         class: "material-icons",
                         onclick: move |_| {
                             if *NEW_FILE_OR_DIR_NAME.lock().unwrap().trim() != "".to_string() {
-                                rename_operation::execute_rename_operation(context.props.files_props, &CLICKED_DIRECTORY_ID, &NEW_FILE_OR_DIR_NAME);
-                                let _ = dioxus_desktop::use_window(context).close();
+                                rename_operation::execute_rename_operation(files_props, &CLICKED_DIRECTORY_ID, &NEW_FILE_OR_DIR_NAME);
+                                dioxus_desktop::use_window(cx).close();
                             }
                         },
                         "check_circle"
@@ -220,11 +215,5 @@ impl Files {
 
     fn clear_error(&mut self) {
         self.error = None;
-    }
-}
-
-impl<'a> RenameProps<'a> {
-    fn new(files_props: &'static UseRef<Files>) -> Self {
-        RenameProps { files_props }
     }
 }

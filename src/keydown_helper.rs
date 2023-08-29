@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+/*use std::sync::Mutex;
 use dioxus::core::{Event};
 use dioxus::events::KeyboardData;
 use dioxus::hooks::UseRef;
@@ -11,4 +11,4 @@ pub fn handle_keydown_event(keydown_event: Event<KeyboardData>, files: &UseRef<F
         //rename_event(files, clicked_directory_id);
     }
     // todo
-}
+}*/
