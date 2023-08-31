@@ -1,6 +1,6 @@
 mod window_helper;
-mod keydown_helper;
 mod rename_operation;
+mod delete_operation;
 
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
@@ -85,13 +85,22 @@ fn app(cx: Scope) -> Element {
                                         tabindex: "0",
                                         onkeydown: move |keydown_event| {
                                             if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
-                                                let dom: VirtualDom = VirtualDom::new_with_props(rename_popup, rename_popupProps { files_props: files.clone() });
-                                                dioxus_desktop::use_window(cx).new_window(dom, Config::default()
+                                                let rename_dom: VirtualDom = VirtualDom::new_with_props(rename_popup, rename_popupProps { files_props: files.clone() });
+                                                dioxus_desktop::use_window(cx).new_window(rename_dom, Config::default()
                                                     .with_window(WindowBuilder::new()
                                                         .with_resizable(false).with_focused(true)
                                                         .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(true)
                                                         .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
                                                         .with_title("Rename").with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(600.0, 300.0)))
+                                                );
+                                            } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
+                                                let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
+                                                dioxus_desktop::use_window(cx).new_window(delete_dom, Config::default()
+                                                    .with_window(WindowBuilder::new()
+                                                    .with_resizable(false).with_focused(true)
+                                                    .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false)
+                                                   .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
+                                                    .with_title("Delete").with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(600.0, 300.0)))
                                                 );
                                             }
                                         },
@@ -156,6 +165,37 @@ fn rename_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
                         },
                         "check_circle"
                     }
+                }
+            }
+        }
+    })
+}
+
+#[inline_props]
+fn delete_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
+    cx.render(rsx! {
+        div {
+            link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
+            style { include_str!("./assets/delete_popup.css") },
+            div {
+                class: "central-div",
+                i { class: "material-icons", {}, "warning" }
+                h1 { "Do you really wish to delete this file/directory? " }
+                br {}
+                i {
+                    class: "material-icons",
+                    onclick: move |_| {
+                        dioxus_desktop::use_window(cx).close();
+                    },
+                    "cancel"
+                },
+                i {
+                    class: "material-icons",
+                    onclick: move |_| {
+                        delete_operation::execute_delete_operation(files_props, &CLICKED_DIRECTORY_ID);
+                        dioxus_desktop::use_window(cx).close();
+                    },
+                    "check_circle"
                 }
             }
         }

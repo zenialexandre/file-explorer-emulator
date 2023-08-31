@@ -87,3 +87,9 @@ pub fn clean_lazy_static_value(clicked_directory_id: &Mutex<usize>) {
 pub fn get_converted_usize_from_string(any_string: String) -> usize {
     return any_string.parse().unwrap();
 }
+
+pub fn get_selected_full_path(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) -> String {
+    let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
+    let selected_full_path: String = files.read().path_names[converted_clicked_directory_id].to_string();
+    selected_full_path
+}
