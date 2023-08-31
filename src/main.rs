@@ -20,6 +20,7 @@ lazy_static! {
     static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string());
 }
 
+#[derive(Clone)]
 pub struct Files {
     path_stack: Vec<String>,
     path_names: Vec<String>,
@@ -84,7 +85,7 @@ fn app(cx: Scope) -> Element {
                                         tabindex: "0",
                                         onkeydown: move |keydown_event| {
                                             if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
-                                                let dom: VirtualDom = VirtualDom::new_with_props(rename_popup, rename_popupProps { files_props: files });
+                                                let dom: VirtualDom = VirtualDom::new_with_props(rename_popup, rename_popupProps { files_props: files.clone() });
                                                 dioxus_desktop::use_window(cx).new_window(dom, Config::default()
                                                     .with_window(WindowBuilder::new()
                                                         .with_resizable(false).with_focused(true)
@@ -122,7 +123,7 @@ fn app(cx: Scope) -> Element {
 }
 
 #[inline_props]
-fn rename_popup<'a>(cx: Scope, files_props: &'a UseRef<Files>) -> Element {
+fn rename_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
     cx.render(rsx! {
         div {
             link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
