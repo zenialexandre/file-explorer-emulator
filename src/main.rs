@@ -104,7 +104,19 @@ fn app(cx: Scope) -> Element {
                                                 );
                                             }
                                         },
-                                        ondblclick: move |_| { files.write().enter_directory(directory_id); },
+                                        ondblclick: move |_| {
+                                            let selected_full_path = window_helper::get_selected_full_path(files, &CLICKED_DIRECTORY_ID);
+                                            match std::fs::metadata(selected_full_path.clone()) {
+                                                Ok(path_metadata) => {
+                                                    if path_metadata.is_file() {
+                                                        window_helper::open_file(selected_full_path.clone().as_str());
+                                                    } else if path_metadata.is_dir() {
+                                                        files.write().enter_directory(directory_id);
+                                                    }
+                                                },
+                                                Err(error) => panic!("{}", error)
+                                            }
+                                        },
                                         onclick: move |_| { *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id; },
                                         td { i { class: "material-icons", "{icon_type}" } },
                                         td { class: "explorer-tbody-td", h1 { "{path_end}" } },

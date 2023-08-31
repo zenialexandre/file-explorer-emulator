@@ -93,3 +93,7 @@ pub fn get_selected_full_path(files: &UseRef<Files>, clicked_directory_id: &Mute
     let selected_full_path: String = files.read().path_names[converted_clicked_directory_id].to_string();
     selected_full_path
 }
+
+pub fn open_file(selected_path: &str) {
+    let _ = opener::open(selected_path);
+}
