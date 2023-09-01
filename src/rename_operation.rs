@@ -15,7 +15,7 @@ pub fn execute_rename_operation(files: &UseRef<Files>, clicked_directory_id: &Mu
         Ok(_) => {
             let _ =
                 std::mem::replace(&mut files.write().path_names[get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string())],
-                                  format!("{}", selected_new_path));
+                                  format!("{}", selected_new_path.trim()));
             files.write().reload_path_list();
         },
         Err(error) => panic!("{}", error)

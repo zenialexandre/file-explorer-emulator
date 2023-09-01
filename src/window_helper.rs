@@ -114,11 +114,3 @@ pub fn get_selected_current_stack(files: &UseRef<Files>) -> String {
 pub fn open_file(selected_path: &str) {
     let _ = opener::open(selected_path);
 }
-
-/*pub fn get_file_size_element<'a>(path: &'a String, file_size: &'a u64) -> LazyNodes<'a, 'a> {
-    if get_file_type_formatted(path.to_string()) == "Regular File" {
-        rsx!( td { class: "explorer-tbody-td", h1 { "{file_size} KB" } } )
-    } else {
-        rsx!( td { class: "explorer-tbody-td", h1 { " " } } )
-    }
-}*/

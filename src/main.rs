@@ -55,7 +55,7 @@ fn app(cx: Scope) -> Element {
                     let icon_type: String = window_helper::get_icon_type(path.to_string());
                     let file_type: String = window_helper::get_file_type_formatted(path.to_string());
                     let path_metadata = std::fs::metadata(path.to_string());
-                    let mut file_size: u64 = window_helper::get_file_size(path.to_string());
+                    let file_size: u64 = window_helper::get_file_size(path.to_string());
                     let mut last_modification_date_utc: DateTime<Utc> = Default::default();
                     let mut _last_modification_date_formatted: String = String::new();
 
