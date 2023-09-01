@@ -2,6 +2,8 @@ use dioxus::prelude::*;
 use dioxus_desktop::tao::window::Icon as TaoIcon;
 use image::GenericImageView;
 use std::sync::Mutex;
+use dioxus_desktop::{Config, WindowBuilder};
+use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 
 use crate::{Files};
 
@@ -88,10 +90,25 @@ pub fn get_converted_usize_from_string(any_string: String) -> usize {
     return any_string.parse().unwrap();
 }
 
+pub fn create_new_dom_generic_window(cx: Scope, generic_dom: VirtualDom, generic_window_name: &str) {
+    dioxus_desktop::use_window(cx).new_window(generic_dom, Config::default()
+        .with_window(WindowBuilder::new()
+            .with_resizable(false).with_focused(true)
+            .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false)
+            .with_window_icon(load_icon_by_path("src/images/icon/cool_circle.png"))
+            .with_title(generic_window_name).with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(600.0, 300.0)))
+    );
+}
+
 pub fn get_selected_full_path(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) -> String {
     let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
     let selected_full_path: String = files.read().path_names[converted_clicked_directory_id].to_string();
     selected_full_path
+}
+
+pub fn get_selected_current_stack(files: &UseRef<Files>) -> String {
+    let selected_current_stack: String = files.read().path_stack[files.read().path_stack.len() - 1].to_string();
+    selected_current_stack
 }
 
 pub fn open_file(selected_path: &str) {

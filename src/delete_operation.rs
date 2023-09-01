@@ -12,7 +12,6 @@ pub fn execute_delete_operation(files_props: &UseRef<Files>, clicked_directory_i
             if path_metadata.is_dir() {
                 std::fs::remove_dir_all(selected_full_path.as_str()).expect("Delete Directory");
             } else if path_metadata.is_file() {
-                println!("is file");
                 std::fs::remove_file(selected_full_path.as_str()).expect("Delete File");
             }
             files_props.write().path_names.pop();
