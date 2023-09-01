@@ -10,6 +10,7 @@ pub fn execute_create_operation(files: &UseRef<Files>, new_file_or_dir_name: &Mu
 }
 
 fn add_new_path(files: &UseRef<Files>, selected_current_stack: String) {
+    let _ = std::fs::create_dir(selected_current_stack.clone());
     files.write().path_names.push(selected_current_stack);
     files.write().reload_path_list();
 }

@@ -12,13 +12,8 @@ use chrono::{DateTime, Utc};
 #[macro_use]
 extern crate lazy_static;
 
-lazy_static! {
-    static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0);
-}
-
-lazy_static! {
-    static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string());
-}
+lazy_static! { static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0); }
+lazy_static! { static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string()); }
 
 #[derive(Clone)]
 pub struct Files {
@@ -63,10 +58,6 @@ fn app(cx: Scope) -> Element {
                     let mut file_size: u64 = window_helper::get_file_size(path.to_string());
                     let mut last_modification_date_utc: DateTime<Utc> = Default::default();
                     let mut _last_modification_date_formatted: String = String::new();
-
-                    if file_type == "File Folder" {
-                        file_size = 0;
-                    }
 
                     if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
                         last_modification_date_utc = path_metadata.into();
@@ -113,7 +104,11 @@ fn app(cx: Scope) -> Element {
                                         td { class: "explorer-tbody-td", h1 { "{path_end}" } },
                                         td { class: "explorer-tbody-td", h1 { "{_last_modification_date_formatted}" } },
                                         td { class: "explorer-tbody-td", h1 { "{file_type}" } },
-                                        td { class: "explorer-tbody-td", h1 { "{file_size} KB" } }
+                                        if window_helper::get_file_type_formatted(path.to_string()) == "Regular File" {
+                                            rsx!( td { class: "explorer-tbody-td", h1 { "{file_size} KB" } } )
+                                        } else {
+                                            rsx!( td { class: "explorer-tbody-td", h1 { " " } } )
+                                        }
                                     }
                                 }
                             }
@@ -233,7 +228,6 @@ impl Files {
         };
         let collected = paths.collect::<Vec<_>>();
 
-        // clear current state
         self.clear_error();
         self.path_names.clear();
 
