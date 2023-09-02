@@ -16,9 +16,9 @@ fn is_recursive_dir(new_file_or_dir_name: &str) -> bool {
 
 fn add_new_path(files: &UseRef<Files>, selected_current_stack: String, is_recursive_dir_input: bool) {
     match is_recursive_dir_input {
-        true => std::fs::create_dir(selected_current_stack.clone()),
-        false => std::fs::create_dir_all(selected_current_stack.clone()), // todo
-    }.expect("It should create a new directory.");
+        true => std::fs::create_dir_all(selected_current_stack.clone()),
+        false => std::fs::create_dir(selected_current_stack.clone()),
+    }.unwrap_or_else(|error| panic!("Error on create_operation: {}", error));
     files.write().path_names.push(selected_current_stack);
     files.write().reload_path_list();
 }
