@@ -11,7 +11,7 @@ pub fn execute_create_operation(files: &UseRef<Files>, new_file_or_dir_name: &Mu
 }
 
 fn is_recursive_dir(new_file_or_dir_name: &str) -> bool {
-    new_file_or_dir_name.contains("/")
+    new_file_or_dir_name.contains("/") || new_file_or_dir_name.contains("\\")
 }
 
 fn add_new_path(files: &UseRef<Files>, selected_current_stack: String, is_recursive_dir_input: bool) {

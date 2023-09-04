@@ -36,6 +36,7 @@ fn main() {
 }
 
 fn app(cx: Scope) -> Element {
+    let main_element: &UseRef<Vec<Event<MountedData>>> = use_ref(cx, || Vec::new());
     let files: &UseRef<Files> = use_ref(cx, Files::new);
 
     cx.render(rsx! {
@@ -50,6 +51,15 @@ fn app(cx: Scope) -> Element {
                 i { class: "material-icons", onclick: move |_| window_helper::close_application(cx), "cancel" }
             }
             main {
+                tabindex: "0",
+                onmounted: move |element| { main_element.write().push(element); },
+                onclick: move |_| { main_element.write().pop().unwrap().data.set_focus(true); },
+                onkeydown: move |keydown_event| {
+                    if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
+                        let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
+                        window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
+                    }
+                },
                 files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
                     let path_end = path.split('/').last().unwrap_or(path.as_str());
                     let icon_type: String = window_helper::get_icon_type(path.to_string());
@@ -81,9 +91,6 @@ fn app(cx: Scope) -> Element {
                                             } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
                                                 let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
                                                 window_helper::create_new_dom_generic_window(cx, delete_dom, "Delete");
-                                            } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
-                                                let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
-                                                window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
                                             }
                                         },
                                         ondblclick: move |_| {
