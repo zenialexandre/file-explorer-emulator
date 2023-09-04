@@ -53,11 +53,17 @@ fn app(cx: Scope) -> Element {
             main {
                 tabindex: "0",
                 onmounted: move |element| { main_element.write().push(element); },
-                onclick: move |_| { main_element.write().pop().unwrap().data.set_focus(true); },
+                onclick: move |_| {
+                    if let Some(element) = main_element.write().pop() {
+                        element.data.set_focus(true);
+                    }
+                },
                 onkeydown: move |keydown_event| {
                     if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
                         let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
                         window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
+                    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
+                        // todo
                     }
                 },
                 files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
@@ -91,6 +97,8 @@ fn app(cx: Scope) -> Element {
                                             } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
                                                 let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
                                                 window_helper::create_new_dom_generic_window(cx, delete_dom, "Delete");
+                                            } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyC {
+                                                // todo
                                             }
                                         },
                                         ondblclick: move |_| {
