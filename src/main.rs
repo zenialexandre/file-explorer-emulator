@@ -2,7 +2,9 @@ mod window_helper;
 mod rename_operation;
 mod delete_operation;
 mod create_operation;
+mod copy_and_paste_operation;
 
+use std::fs::File;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
 use dioxus::html::input_data::keyboard_types::{Code, Modifiers};
@@ -14,6 +16,9 @@ extern crate lazy_static;
 
 lazy_static! { static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0); }
 lazy_static! { static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string()); }
+lazy_static! { static ref COPIED_FILE_OR_DIR_NAME: Mutex<Vec<String>> = Mutex::new(Vec::new()); }
+
+const REGULAR_FILE: &str = "Regular File";
 
 #[derive(Clone)]
 pub struct Files {
@@ -25,7 +30,7 @@ pub struct Files {
 fn main() {
     dioxus_desktop::launch_cfg(
         app,
-        Config::default().with_window(WindowBuilder::new()
+        Config::default().with_disable_context_menu(true).with_window(WindowBuilder::new()
             .with_resizable(true).with_title("File Explorer Emulator")
             .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(1000.0, 800.0))
             .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
@@ -55,7 +60,7 @@ fn app(cx: Scope) -> Element {
                 onmounted: move |element| { main_element.write().push(element); },
                 onclick: move |_| {
                     if let Some(element) = main_element.write().pop() {
-                        element.data.set_focus(true);
+                        element.set_focus(true);
                     }
                 },
                 onkeydown: move |keydown_event| {
@@ -63,11 +68,11 @@ fn app(cx: Scope) -> Element {
                         let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
                         window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
                     } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
-                        // todo
+                        copy_and_paste_operation::execute_paste_operation(&NEW_FILE_OR_DIR_NAME, &COPIED_FILE_OR_DIR_NAME. files);
                     }
                 },
                 files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
-                    let path_end = path.split('/').last().unwrap_or(path.as_str());
+                    let path_end = path.split('\\').last().unwrap_or(path.as_str());
                     let icon_type: String = window_helper::get_icon_type(path.to_string());
                     let file_type: String = window_helper::get_file_type_formatted(path.to_string());
                     let path_metadata = std::fs::metadata(path.to_string());
@@ -98,7 +103,7 @@ fn app(cx: Scope) -> Element {
                                                 let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
                                                 window_helper::create_new_dom_generic_window(cx, delete_dom, "Delete");
                                             } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyC {
-                                                // todo
+                                                copy_and_paste_operation::execute_copy_operation(&NEW_FILE_OR_DIR_NAME, &COPIED_FILE_OR_DIR_NAME, &CLICKED_DIRECTORY_ID, files.clone());
                                             }
                                         },
                                         ondblclick: move |_| {
@@ -119,7 +124,7 @@ fn app(cx: Scope) -> Element {
                                         td { class: "explorer-tbody-td", h1 { "{path_end}" } },
                                         td { class: "explorer-tbody-td", h1 { "{_last_modification_date_formatted}" } },
                                         td { class: "explorer-tbody-td", h1 { "{file_type}" } },
-                                        if window_helper::get_file_type_formatted(path.to_string()) == "Regular File" {
+                                        if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
                                             rsx!( td { class: "explorer-tbody-td", h1 { "{file_size} KB" } } )
                                         } else {
                                             rsx!( td { class: "explorer-tbody-td", h1 { " " } } )
@@ -273,4 +278,5 @@ impl Files {
     fn clear_error(&mut self) {
         self.error = None;
     }
+
 }
