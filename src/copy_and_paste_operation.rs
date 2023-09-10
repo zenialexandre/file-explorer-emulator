@@ -1,6 +1,5 @@
-use std::{fs, io};
+use std::{io};
 use std::fs::File;
-use std::io::{Read, Write};
 use std::sync::Mutex;
 use dioxus::hooks::UseRef;
 use crate::{Files, REGULAR_FILE, window_helper};
