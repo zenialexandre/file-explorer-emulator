@@ -1,3 +1,4 @@
+use std::{fs, io};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::sync::Mutex;
@@ -26,13 +27,15 @@ pub fn execute_paste_operation(files: &UseRef<Files>) {
 
 fn paste_file(mut selected_current_stack: String, copied_file_or_dir_name_joined: String) {
     selected_current_stack.push_str(format!("\\{}", COPIED_FILE_OR_DIR_NAME.lock().unwrap().last().unwrap()).as_str());
-    let mut new_file = File::create(selected_current_stack.clone()).unwrap_or_else(|error| panic!("{}", error));
+    let new_file = File::create(selected_current_stack.clone()).unwrap_or_else(|error| panic!("{}", error));
     let original_file = File::open(copied_file_or_dir_name_joined.as_str());
-    let mut original_file_buffer: String = String::new();
-    original_file.unwrap().read_to_string(&mut original_file_buffer).expect("Unable to read.");
-    new_file.write_all(original_file_buffer.as_bytes()).expect("Unable to write.");
+    copy_content(original_file.unwrap(), new_file);
 }
 
 fn paste_dir() {
     // todo -> Verify if a directory has content inside, and paste it all
+}
+
+fn copy_content(mut original_file: File, mut new_file: File) {
+    io::copy(&mut original_file, &mut new_file).unwrap_or_else(|error| panic!("{}", error));
 }
