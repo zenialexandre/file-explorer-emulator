@@ -3,6 +3,7 @@ mod rename_operation;
 mod delete_operation;
 mod create_operation;
 mod copy_and_paste_operation;
+mod conflict_process;
 
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
@@ -66,7 +67,7 @@ fn app(cx: Scope) -> Element {
                         let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
                         window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
                     } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
-                        copy_and_paste_operation::execute_paste_operation(files);
+                        copy_and_paste_operation::execute_paste_operation(cx, files);
                     }
                 },
                 files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
