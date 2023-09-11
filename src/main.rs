@@ -57,7 +57,7 @@ fn app(cx: Scope) -> Element {
                 tabindex: "0",
                 onmounted: move |element| { main_element.write().push(element); },
                 onclick: move |_| {
-                    if let Some(element) = main_element.write().pop() {
+                    if let Some(element) = main_element.read().last() {
                         element.set_focus(true);
                     }
                 },
@@ -133,7 +133,6 @@ fn app(cx: Scope) -> Element {
                         }
                     )
                 }),
-
                 files.read().error.as_ref().map(|err| {
                     rsx! (
                         div {

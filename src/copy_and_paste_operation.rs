@@ -1,7 +1,9 @@
 use std::{io};
 use std::fs::File;
 use std::sync::Mutex;
+use dioxus::core::Scope;
 use dioxus::hooks::UseRef;
+use dioxus::prelude::{Element, inline_props};
 use fs_extra::dir::CopyOptions;
 use crate::{Files, REGULAR_FILE, window_helper};
 
@@ -41,3 +43,18 @@ fn paste_dir(selected_current_stack: String, copied_file_or_dir_name_joined: Str
 fn copy_file(mut original_file: File, mut new_file: File) {
     io::copy(&mut original_file, &mut new_file).unwrap_or_else(|error| panic!("{}", error));
 }
+
+fn check_file_or_dir_paste_conflict(mut selected_current_stack: String, files: &UseRef<Files>) -> bool {
+    let copied_file_or_dir_name = COPIED_FILE_OR_DIR_NAME.lock().unwrap().last().unwrap().to_string();
+    selected_current_stack.push_str(format!("\\{}", copied_file_or_dir_name).as_str());
+
+    if files.read().path_names.contains(&selected_current_stack) {
+        true
+    }
+    false
+}
+
+/*#[inline_props]
+fn conflict_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
+
+}*/
