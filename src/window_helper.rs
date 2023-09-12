@@ -7,7 +7,7 @@ use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 
 use crate::{Files};
 
-pub fn load_icon_by_path(file_path: &str) -> Option<TaoIcon> {
+pub(crate) fn load_icon_by_path(file_path: &str) -> Option<TaoIcon> {
     return if let Ok(image) = image::open(file_path) {
         let (width, height) = image.dimensions();
         let rgba_data = image.to_rgba8().into_raw();
@@ -17,12 +17,7 @@ pub fn load_icon_by_path(file_path: &str) -> Option<TaoIcon> {
     }
 }
 
-pub fn close_application(cx: Scope) {
-    let window = dioxus_desktop::use_window(&cx);
-    window.close_window(window.id());
-}
-
-pub fn validate_clicked_id_on_click(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) {
+pub(crate) fn validate_clicked_id_on_click(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) {
     let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
 
     if converted_clicked_directory_id >= get_converted_usize_from_string("0".to_string()) {
@@ -30,7 +25,7 @@ pub fn validate_clicked_id_on_click(files: &UseRef<Files>, clicked_directory_id:
     }
 }
 
-pub fn get_icon_type(path: String) -> String {
+pub(crate) fn get_icon_type(path: String) -> String {
     return match std::fs::metadata(path.clone()) {
         Ok(metadata) => {
             if path.ends_with(".zip") {
@@ -50,7 +45,7 @@ pub fn get_icon_type(path: String) -> String {
     }
 }
 
-pub fn get_file_type_formatted(path: String) -> String {
+pub(crate) fn get_file_type_formatted(path: String) -> String {
     return match std::fs::metadata(path.clone()) {
         Ok(metadata) => {
             if metadata.is_dir() {
@@ -70,7 +65,7 @@ pub fn get_file_type_formatted(path: String) -> String {
     }
 }
 
-pub fn get_file_size(path: String) -> u64 {
+pub(crate) fn get_file_size(path: String) -> u64 {
     return match std::fs::metadata(path.clone()) {
         Ok(metadata) => {
             (metadata.len() as f64 / 1000.00).ceil() as u64
@@ -82,15 +77,15 @@ pub fn get_file_size(path: String) -> u64 {
     };
 }
 
-pub fn clean_lazy_static_value(clicked_directory_id: &Mutex<usize>) {
+pub(crate) fn clean_lazy_static_value(clicked_directory_id: &Mutex<usize>) {
     *clicked_directory_id.lock().unwrap() = "0".parse().unwrap();
 }
 
-pub fn get_converted_usize_from_string(any_string: String) -> usize {
+pub(crate) fn get_converted_usize_from_string(any_string: String) -> usize {
     return any_string.parse().unwrap();
 }
 
-pub fn create_new_dom_generic_window(cx: Scope, generic_dom: VirtualDom, generic_window_name: &str) {
+pub(crate) fn create_new_dom_generic_window(cx: Scope, generic_dom: VirtualDom, generic_window_name: &str) {
     dioxus_desktop::use_window(cx).new_window(generic_dom, Config::default()
         .with_window(WindowBuilder::new()
             .with_resizable(false).with_focused(true)
@@ -100,17 +95,17 @@ pub fn create_new_dom_generic_window(cx: Scope, generic_dom: VirtualDom, generic
     );
 }
 
-pub fn get_selected_full_path(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) -> String {
+pub(crate) fn get_selected_full_path(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) -> String {
     let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
     let selected_full_path: String = files.read().path_names[converted_clicked_directory_id].to_string();
     selected_full_path
 }
 
-pub fn get_selected_current_stack(files: &UseRef<Files>) -> String {
+pub(crate) fn get_selected_current_stack(files: &UseRef<Files>) -> String {
     let selected_current_stack: String = files.read().path_stack[files.read().path_stack.len() - 1].to_string();
     selected_current_stack
 }
 
-pub fn open_file(selected_path: &str) {
+pub(crate) fn open_file(selected_path: &str) {
     let _ = opener::open(selected_path);
 }

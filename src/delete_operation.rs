@@ -4,7 +4,7 @@ use dioxus::hooks::UseRef;
 use crate::Files;
 use crate::window_helper::get_selected_full_path;
 
-pub fn execute_delete_operation(files_props: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) {
+pub(crate) fn execute_delete_operation(files_props: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) {
     let selected_full_path: String = get_selected_full_path(files_props, clicked_directory_id);
 
     match std::fs::metadata(selected_full_path.clone()) {

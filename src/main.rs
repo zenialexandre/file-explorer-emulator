@@ -20,7 +20,7 @@ lazy_static! { static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to
 const REGULAR_FILE: &str = "Regular File";
 
 #[derive(Clone)]
-pub struct Files {
+pub(crate) struct Files {
     path_stack: Vec<String>,
     path_names: Vec<String>,
     error: Option<String>,
@@ -52,7 +52,7 @@ fn app(cx: Scope) -> Element {
                 i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
                 h1 { files.read().current() }
                 span { }
-                i { class: "material-icons", onclick: move |_| window_helper::close_application(cx), "cancel" }
+                i { class: "material-icons", onclick: move |_| dioxus_desktop::use_window(cx).close(), "cancel" }
             }
             main {
                 tabindex: "0",
@@ -167,7 +167,7 @@ fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &
                     i {
                         class: "material-icons",
                         onclick: move |_| {
-                            dioxus_desktop::use_window(cx).close();
+                           dioxus_desktop::use_window(cx).close();
                         },
                         "cancel"
                     },
