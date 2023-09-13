@@ -1,14 +1,15 @@
 use std::fs::File;
 use std::sync::Mutex;
+use dioxus::hooks::UseState;
 use dioxus::prelude::UseRef;
 
 use crate::{Files, window_helper};
 
-pub(crate) fn execute_create_operation(files: &UseRef<Files>, new_file_or_dir_name: &Mutex<String>) {
+pub(crate) fn execute_create_operation(files: &UseRef<Files>, new_file_or_dir_name: &Mutex<String>, enable_file_creation: &UseState<bool>) {
     let mut selected_current_stack: String = window_helper::get_selected_current_stack(files);
     selected_current_stack.push_str(format!("\\{}", new_file_or_dir_name.lock().unwrap()).as_str().trim());
 
-    if new_file_or_dir_name.lock().unwrap().contains(".") {
+    if enable_file_creation.get() == &true {
         let _ = File::create(selected_current_stack.clone());
         add_new_file(selected_current_stack.clone());
     } else {

@@ -24,9 +24,21 @@
     padding-left: 100px;
 }
 
-.forms-div input {
+.forms-div label {
+    font-family: 'Rubik', sans-serif;
+    text-align: left;
+    font-weight: 5px;
+    font-size: 15px;
+}
+
+#directory-file-name {
     width: 200px;
     border-radius: 5px;
+}
+
+#enable-file-creation {
+    width: 20px;
+    vertical-align: left;
 }
 
 .material-icons {

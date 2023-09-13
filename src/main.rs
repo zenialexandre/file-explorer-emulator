@@ -151,6 +151,8 @@ fn app(cx: Scope) -> Element {
 
 #[inline_props]
 fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &'a str) -> Element {
+    let enable_file_creation = use_state(cx, || false);
+
     cx.render(rsx! {
         div {
             link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
@@ -161,11 +163,28 @@ fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &
                 div {
                     class: "forms-div",
                     input {
-                        oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() },
                         r#type: "text",
-                        placeholder: "Directory/File new name"
+                        placeholder: "Directory/File new name",
+                        id: "directory-file-name",
+                        oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() }
                     },
-                    br {}
+                    br {}, br {},
+                    if title_props == &"Create" {
+                        rsx!(
+                            label {
+                                input {
+                                    r#type: "checkbox",
+                                    checked: "{enable_file_creation}",
+                                    id: "enable-file-creation",
+                                    oninput: move |check_event| {
+                                        enable_file_creation.set(check_event.value.parse().unwrap());
+                                    }
+                                }
+                                "Check if the new content is a file."
+                            }
+                        )
+                    }
+                    br {}, br {},
                     i {
                         class: "material-icons",
                         onclick: move |_| {
@@ -179,7 +198,7 @@ fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &
                             if *NEW_FILE_OR_DIR_NAME.lock().unwrap().trim() != "".to_string() {
                                 match title_props.as_ref() {
                                     "Rename" => rename_operation::execute_rename_operation(files_props, &CLICKED_DIRECTORY_ID, &NEW_FILE_OR_DIR_NAME),
-                                    "Create" => create_operation::execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME),
+                                    "Create" => create_operation::execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME, enable_file_creation),
                                     _ => println!("Something gone wrong.")
                                 }
                                 dioxus_desktop::use_window(cx).close();
