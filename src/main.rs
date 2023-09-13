@@ -168,9 +168,9 @@ fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &
                         id: "directory-file-name",
                         oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() }
                     },
-                    br {}, br {},
                     if title_props == &"Create" {
                         rsx!(
+                            br {}, br {},
                             label {
                                 input {
                                     r#type: "checkbox",
@@ -181,10 +181,11 @@ fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &
                                     }
                                 }
                                 "Check if the new content is a file."
-                            }
+                            },
+                            br {},
                         )
                     }
-                    br {}, br {},
+                    br {},
                     i {
                         class: "material-icons",
                         onclick: move |_| {
