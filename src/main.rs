@@ -53,8 +53,8 @@ fn app(cx: Scope) -> Element {
                 h1 { files.read().current() }
                 span { }
                 i { class: "material-icons", onclick: move |_| dioxus_desktop::use_window(cx).close(), "cancel" }
-            }
-            main {
+            },
+            div {
                 tabindex: "0",
                 onmounted: move |element| { main_element.write().push(element); },
                 onclick: move |_| {
@@ -70,78 +70,80 @@ fn app(cx: Scope) -> Element {
                         copy_and_paste_operation::execute_paste_operation(cx, files);
                     }
                 },
-                files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
-                    let path_end = path.split('\\').last().unwrap_or(path.as_str());
-                    let icon_type: String = window_helper::get_icon_type(path.to_string());
-                    let file_type: String = window_helper::get_file_type_formatted(path.to_string());
-                    let path_metadata = std::fs::metadata(path.to_string());
-                    let file_size: u64 = window_helper::get_file_size(path.to_string());
-                    let mut last_modification_date_utc: DateTime<Utc> = Default::default();
-                    let mut _last_modification_date_formatted: String = String::new();
+                main {
+                    files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
+                        let path_end = path.split('\\').last().unwrap_or(path.as_str());
+                        let icon_type: String = window_helper::get_icon_type(path.to_string());
+                        let file_type: String = window_helper::get_file_type_formatted(path.to_string());
+                        let path_metadata = std::fs::metadata(path.to_string());
+                        let file_size: u64 = window_helper::get_file_size(path.to_string());
+                        let mut last_modification_date_utc: DateTime<Utc> = Default::default();
+                        let mut _last_modification_date_formatted: String = String::new();
 
-                    if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
-                        last_modification_date_utc = path_metadata.into();
-                    }
-                    _last_modification_date_formatted = last_modification_date_utc.format("%d/%m/%Y %H:%M:%S").to_string().split('.').next().expect("Next").to_string();
+                        if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
+                            last_modification_date_utc = path_metadata.into();
+                        }
+                        _last_modification_date_formatted = last_modification_date_utc.format("%d/%m/%Y %H:%M:%S").to_string().split('.').next().expect("Next").to_string();
 
-                    rsx! (
-                        div {
-                            class: "folder",
-                            key: "{path}",
-                            table {
-                                class: "explorer-table",
-                                tbody {
-                                    class: "explorer-tbody",
-                                    tr {
-                                        tabindex: "0",
-                                        onkeydown: move |keydown_event| {
-                                            if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
-                                                let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
-                                                window_helper::create_new_dom_generic_window(cx, rename_dom, "Rename");
-                                            } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
-                                                let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
-                                                window_helper::create_new_dom_generic_window(cx, delete_dom, "Delete");
-                                            } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyC {
-                                                copy_and_paste_operation::execute_copy_operation(&CLICKED_DIRECTORY_ID, files);
+                        rsx! (
+                            div {
+                                class: "folder",
+                                key: "{path}",
+                                table {
+                                    class: "explorer-table",
+                                    tbody {
+                                        class: "explorer-tbody",
+                                        tr {
+                                            tabindex: "0",
+                                            onkeydown: move |keydown_event| {
+                                                if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
+                                                    let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
+                                                    window_helper::create_new_dom_generic_window(cx, rename_dom, "Rename");
+                                                } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
+                                                    let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
+                                                    window_helper::create_new_dom_generic_window(cx, delete_dom, "Delete");
+                                                } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyC {
+                                                    copy_and_paste_operation::execute_copy_operation(&CLICKED_DIRECTORY_ID, files);
+                                                }
+                                            },
+                                            ondblclick: move |_| {
+                                                let selected_full_path = window_helper::get_selected_full_path(files, &CLICKED_DIRECTORY_ID);
+                                                match std::fs::metadata(selected_full_path.clone()) {
+                                                    Ok(path_metadata) => {
+                                                        if path_metadata.is_file() {
+                                                            window_helper::open_file(selected_full_path.clone().as_str());
+                                                        } else if path_metadata.is_dir() {
+                                                            files.write().enter_directory(directory_id);
+                                                        }
+                                                    },
+                                                    Err(error) => panic!("{}", error)
+                                                }
+                                            },
+                                            onclick: move |_| { *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id; },
+                                            td { i { class: "material-icons", "{icon_type}" } },
+                                            td { class: "explorer-tbody-td", h1 { "{path_end}" } },
+                                            td { class: "explorer-tbody-td", h1 { "{_last_modification_date_formatted}" } },
+                                            td { class: "explorer-tbody-td", h1 { "{file_type}" } },
+                                            if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
+                                                rsx!( td { class: "explorer-tbody-td", h1 { "{file_size} KB" } } )
+                                            } else {
+                                                rsx!( td { class: "explorer-tbody-td", h1 { " " } } )
                                             }
-                                        },
-                                        ondblclick: move |_| {
-                                            let selected_full_path = window_helper::get_selected_full_path(files, &CLICKED_DIRECTORY_ID);
-                                            match std::fs::metadata(selected_full_path.clone()) {
-                                                Ok(path_metadata) => {
-                                                    if path_metadata.is_file() {
-                                                        window_helper::open_file(selected_full_path.clone().as_str());
-                                                    } else if path_metadata.is_dir() {
-                                                        files.write().enter_directory(directory_id);
-                                                    }
-                                                },
-                                                Err(error) => panic!("{}", error)
-                                            }
-                                        },
-                                        onclick: move |_| { *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id; },
-                                        td { i { class: "material-icons", "{icon_type}" } },
-                                        td { class: "explorer-tbody-td", h1 { "{path_end}" } },
-                                        td { class: "explorer-tbody-td", h1 { "{_last_modification_date_formatted}" } },
-                                        td { class: "explorer-tbody-td", h1 { "{file_type}" } },
-                                        if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
-                                            rsx!( td { class: "explorer-tbody-td", h1 { "{file_size} KB" } } )
-                                        } else {
-                                            rsx!( td { class: "explorer-tbody-td", h1 { " " } } )
                                         }
                                     }
                                 }
                             }
-                        }
-                    )
-                }),
-                files.read().error.as_ref().map(|err| {
-                    rsx! (
-                        div {
-                            code { "{err}" }
-                            button { onclick: move |_| files.write().clear_error(), "x" }
-                        }
-                    )
-                })
+                        )
+                    }),
+                    files.read().error.as_ref().map(|err| {
+                        rsx! (
+                            div {
+                                code { "{err}" }
+                                button { onclick: move |_| files.write().clear_error(), "x" }
+                            }
+                        )
+                    })
+                }
             }
         }
     })

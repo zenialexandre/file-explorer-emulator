@@ -6,7 +6,7 @@ use dioxus::hooks::UseRef;
 use fs_extra::dir::CopyOptions;
 use crate::{conflict_process, Files, REGULAR_FILE, window_helper};
 
-lazy_static! { pub static ref COPIED_FILE_OR_DIR_NAME: Mutex<Vec<String>> = Mutex::new(Vec::new()); }
+lazy_static! { pub(crate) static ref COPIED_FILE_OR_DIR_NAME: Mutex<Vec<String>> = Mutex::new(Vec::new()); }
 
 pub(crate) fn execute_copy_operation(clicked_directory_id: &Mutex<usize>, files: &UseRef<Files>) {
     *COPIED_FILE_OR_DIR_NAME.lock().unwrap() = window_helper::get_selected_full_path(files, clicked_directory_id)
