@@ -22,7 +22,13 @@ pub(crate) fn with_conflict_process(cx: Scope, files: &UseRef<Files>, selected_c
 fn conflict_popup(cx: Scope, files_props: UseRef<Files>, copied_file_or_dir_props: String, selected_current_stack_props: String) -> Element {
     cx.render(rsx! {
         div {
-            // todo
+            link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
+            style { include_str!("./assets/conflict_popup.css") }
+            div {
+                class: "central-div",
+                i { class: "material-icons", {}, "warning" }
+                h1 { "Your operation generated a conflict!" }
+            }
         }
     })
 }
