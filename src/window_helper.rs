@@ -77,8 +77,9 @@ pub(crate) fn get_file_size(path: String) -> u64 {
     };
 }
 
-pub(crate) fn clean_lazy_static_value(clicked_directory_id: &Mutex<usize>) {
+pub(crate) fn clean_lazy_static_value(clicked_directory_id: &Mutex<usize>, copy_incremental_id: &Mutex<u32>) {
     *clicked_directory_id.lock().unwrap() = "0".parse().unwrap();
+    *copy_incremental_id.lock().unwrap() = 0;
 }
 
 pub(crate) fn get_converted_usize_from_string(any_string: String) -> usize {

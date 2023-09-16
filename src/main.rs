@@ -11,6 +11,8 @@ use dioxus::html::input_data::keyboard_types::{Code, Modifiers};
 use std::sync::{Mutex};
 use chrono::{DateTime, Utc};
 
+use crate::copy_and_paste_operation::COPY_INCREMENTAL_ID;
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -83,7 +85,8 @@ fn app(cx: Scope) -> Element {
                         if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
                             last_modification_date_utc = path_metadata.into();
                         }
-                        _last_modification_date_formatted = last_modification_date_utc.format("%d/%m/%Y %H:%M:%S").to_string().split('.').next().expect("Next").to_string();
+                        _last_modification_date_formatted =
+                            last_modification_date_utc.format("%d/%m/%Y %H:%M:%S").to_string().split('.').next().expect("Next").to_string();
 
                         rsx! (
                             div {
@@ -97,7 +100,8 @@ fn app(cx: Scope) -> Element {
                                             tabindex: "0",
                                             onkeydown: move |keydown_event| {
                                                 if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
-                                                    let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
+                                                    let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
+                                                        create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
                                                     window_helper::create_new_dom_generic_window(cx, rename_dom, "Rename");
                                                 } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
                                                     let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
@@ -280,14 +284,14 @@ impl Files {
         if self.path_stack.len() > 1 {
             self.path_stack.pop();
         }
-        window_helper::clean_lazy_static_value(&CLICKED_DIRECTORY_ID);
+        window_helper::clean_lazy_static_value(&CLICKED_DIRECTORY_ID,  &COPY_INCREMENTAL_ID);
         self.reload_path_list();
     }
 
     fn enter_directory(&mut self, directory_id: usize) {
         let path = &self.path_names[directory_id];
         self.path_stack.push(path.clone());
-        window_helper::clean_lazy_static_value(&CLICKED_DIRECTORY_ID);
+        window_helper::clean_lazy_static_value(&CLICKED_DIRECTORY_ID, &COPY_INCREMENTAL_ID);
         self.reload_path_list();
     }
 
