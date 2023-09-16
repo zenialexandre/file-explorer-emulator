@@ -69,7 +69,7 @@ fn app(cx: Scope) -> Element {
                         let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
                         window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
                     } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
-                        copy_and_paste_operation::execute_paste_operation(cx, files);
+                        copy_and_paste_operation::execute_paste_operation(files);
                     }
                 },
                 main {

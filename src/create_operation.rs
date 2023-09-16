@@ -27,7 +27,7 @@ fn is_recursive_dir(new_file_or_dir_name: &str) -> bool {
     new_file_or_dir_name.contains("/") || new_file_or_dir_name.contains("\\")
 }
 
-fn add_new_dir(selected_current_stack: String, is_recursive_dir_input: bool) {
+pub(crate) fn add_new_dir(selected_current_stack: String, is_recursive_dir_input: bool) {
     match is_recursive_dir_input {
         true => std::fs::create_dir_all(selected_current_stack.clone()),
         false => std::fs::create_dir(selected_current_stack.clone()),
