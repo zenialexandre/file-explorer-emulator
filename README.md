@@ -4,7 +4,11 @@ File Explorer Emulator - made for my Operating Systems classes at the sixth seme
 Keyboard Commands:
 
 Ctrl + N = New
+
 Ctrl + D = Delete
+
 Ctrl + R = Rename
+
 Ctrl + C = Copy
+
 Ctrl + V = Paste
