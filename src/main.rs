@@ -5,8 +5,10 @@ mod create_operation;
 mod copy_and_paste_operation;
 mod conflict_process;
 
+use std::ops::Not;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
+use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 use dioxus::html::input_data::keyboard_types::{Code, Modifiers};
 use std::sync::{Mutex};
 use chrono::{DateTime, Utc};
@@ -66,8 +68,9 @@ fn app(cx: Scope) -> Element {
                 },
                 onkeydown: move |keydown_event| {
                     if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
-                        let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
-                        window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
+                        let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Create",
+                            selected_current_stack_props: window_helper::get_selected_current_stack(files), new_file_or_dir_name_props: NEW_FILE_OR_DIR_NAME.lock().unwrap().to_string() });
+                        window_helper::create_new_dom_generic_window(cx, create_dom, "Create",);
                     } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
                         copy_and_paste_operation::execute_paste_operation(files);
                     }
@@ -101,7 +104,8 @@ fn app(cx: Scope) -> Element {
                                             onkeydown: move |keydown_event| {
                                                 if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
                                                     let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
-                                                        create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
+                                                        create_rename_popupProps { files_props: files.clone(), title_props: "Rename",
+                                                            selected_current_stack_props: window_helper::get_selected_current_stack(files), new_file_or_dir_name_props: NEW_FILE_OR_DIR_NAME.lock().unwrap().to_string() });
                                                     window_helper::create_new_dom_generic_window(cx, rename_dom, "Rename");
                                                 } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
                                                     let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
@@ -154,7 +158,8 @@ fn app(cx: Scope) -> Element {
 }
 
 #[inline_props]
-fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &'a str) -> Element {
+fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &'a str,
+                           selected_current_stack_props: String, new_file_or_dir_name_props: String) -> Element {
     let enable_file_creation = use_state(cx, || false);
 
     cx.render(rsx! {
@@ -203,7 +208,19 @@ fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &
                             if *NEW_FILE_OR_DIR_NAME.lock().unwrap().trim() != "".to_string() {
                                 match title_props.as_ref() {
                                     "Rename" => rename_operation::execute_rename_operation(files_props, &CLICKED_DIRECTORY_ID, &NEW_FILE_OR_DIR_NAME),
-                                    "Create" => create_operation::execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME, enable_file_creation),
+                                    "Create" => {
+                                        if create_operation::execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME, enable_file_creation).not() {
+                                            let conflict_dom: VirtualDom = VirtualDom::new_with_props(conflict_popup, conflict_popupProps
+                                            { files_props: files_props.clone(), selected_current_stack_props: selected_current_stack_props.to_string(), new_file_or_dir_name_props: new_file_or_dir_name_props.to_string() });
+                                            dioxus_desktop::use_window(cx).new_window(conflict_dom, Config::default()
+                                                .with_window(WindowBuilder::new()
+                                                    .with_resizable(false).with_focused(true)
+                                                    .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false)
+                                                    .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
+                                                    .with_title("Conflict").with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(600.0, 300.0)))
+                                            );
+                                        }
+                                    },
                                     _ => println!("Something gone wrong.")
                                 }
                                 dioxus_desktop::use_window(cx).close();
@@ -243,6 +260,21 @@ fn delete_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
                     },
                     "check_circle"
                 }
+            }
+        }
+    })
+}
+
+#[inline_props]
+fn conflict_popup(cx: Scope, files_props: UseRef<Files>, selected_current_stack_props: String, new_file_or_dir_name_props: String) -> Element {
+    cx.render(rsx! {
+        div {
+            link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
+            style { include_str!("./assets/conflict_popup.css") }
+            div {
+                class: "central-div",
+                i { class: "material-icons", {}, "warning" }
+                h1 { "Your operation generated a conflict!" }
             }
         }
     })
