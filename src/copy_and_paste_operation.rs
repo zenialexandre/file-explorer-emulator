@@ -1,5 +1,6 @@
 use std::{io};
 use std::fs::{File};
+use std::ops::Not;
 use std::string::ToString;
 use std::sync::{Mutex};
 use dioxus::hooks::{UseRef};
@@ -34,7 +35,8 @@ fn paste_operation(selected_current_stack: String, copied_file_or_dir_name_joine
 fn paste_file(selected_current_stack: String, copied_file_or_dir_name_joined: String, files: &UseRef<Files>) {
     let mut file_name = COPIED_FILE_OR_DIR_NAME.lock().unwrap().last().unwrap().to_string();
 
-    if conflict_process::check_file_or_dir_conflict(file_name.clone(), selected_current_stack.clone(), files) {
+    if conflict_process::check_file_or_dir_conflict(file_name.clone(), selected_current_stack.clone(), files)
+        && window_helper::get_file_type_formatted(copied_file_or_dir_name_joined.clone()) == REGULAR_FILE.to_string() {
         file_name = get_restructured_file_name(file_name);
     }
     end_paste_file_operation(selected_current_stack.clone(), file_name, copied_file_or_dir_name_joined.clone());
@@ -59,7 +61,8 @@ fn end_paste_file_operation(mut selected_current_stack: String, file_name: Strin
 fn paste_dir(selected_current_stack: String, copied_file_or_dir_name_joined: String, files: &UseRef<Files>) {
     let copy_options = CopyOptions::new();
 
-    if conflict_process::check_file_or_dir_conflict(copied_file_or_dir_name_joined.split("\\").last().unwrap().to_string(), selected_current_stack.clone(), files) {
+    if conflict_process::check_file_or_dir_conflict(copied_file_or_dir_name_joined.split("\\").last().unwrap().to_string(), selected_current_stack.clone(), files)
+        && (window_helper::get_file_type_formatted(copied_file_or_dir_name_joined.clone()) == REGULAR_FILE.to_string()).not() {
         paste_dir_with_conflict(selected_current_stack.clone(), copied_file_or_dir_name_joined.clone(), &copy_options);
     } else {
         fs_extra::dir::copy(copied_file_or_dir_name_joined, selected_current_stack.clone(), &copy_options)

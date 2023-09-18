@@ -68,8 +68,8 @@ fn app(cx: Scope) -> Element {
                 },
                 onkeydown: move |keydown_event| {
                     if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
-                        let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup, create_rename_popupProps { files_props: files.clone(), title_props: "Create",
-                            selected_current_stack_props: window_helper::get_selected_current_stack(files), new_file_or_dir_name_props: NEW_FILE_OR_DIR_NAME.lock().unwrap().to_string() });
+                        let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
+                            create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
                         window_helper::create_new_dom_generic_window(cx, create_dom, "Create",);
                     } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
                         copy_and_paste_operation::execute_paste_operation(files);
@@ -104,8 +104,7 @@ fn app(cx: Scope) -> Element {
                                             onkeydown: move |keydown_event| {
                                                 if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
                                                     let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
-                                                        create_rename_popupProps { files_props: files.clone(), title_props: "Rename",
-                                                            selected_current_stack_props: window_helper::get_selected_current_stack(files), new_file_or_dir_name_props: NEW_FILE_OR_DIR_NAME.lock().unwrap().to_string() });
+                                                        create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
                                                     window_helper::create_new_dom_generic_window(cx, rename_dom, "Rename");
                                                 } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
                                                     let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
@@ -158,8 +157,7 @@ fn app(cx: Scope) -> Element {
 }
 
 #[inline_props]
-fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &'a str,
-                           selected_current_stack_props: String, new_file_or_dir_name_props: String) -> Element {
+fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &'a str) -> Element {
     let enable_file_creation = use_state(cx, || false);
 
     cx.render(rsx! {
@@ -211,7 +209,7 @@ fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &
                                     "Create" => {
                                         if create_operation::execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME, enable_file_creation).not() {
                                             let conflict_dom: VirtualDom = VirtualDom::new_with_props(conflict_popup, conflict_popupProps
-                                            { files_props: files_props.clone(), selected_current_stack_props: selected_current_stack_props.to_string(), new_file_or_dir_name_props: new_file_or_dir_name_props.to_string() });
+                                            { files_props: files_props.clone(), enable_file_creation_props: enable_file_creation.clone() });
                                             dioxus_desktop::use_window(cx).new_window(conflict_dom, Config::default()
                                                 .with_window(WindowBuilder::new()
                                                     .with_resizable(false).with_focused(true)
@@ -266,7 +264,9 @@ fn delete_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
 }
 
 #[inline_props]
-fn conflict_popup(cx: Scope, files_props: UseRef<Files>, selected_current_stack_props: String, new_file_or_dir_name_props: String) -> Element {
+fn conflict_popup(cx: Scope, files_props: UseRef<Files>, enable_file_creation_props: UseState<bool>) -> Element {
+    let enable_rename_field = use_state(cx, || false);
+
     cx.render(rsx! {
         div {
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
@@ -275,6 +275,52 @@ fn conflict_popup(cx: Scope, files_props: UseRef<Files>, selected_current_stack_
                 class: "central-div",
                 i { class: "material-icons", {}, "warning" }
                 h1 { "Your operation generated a conflict!" }
+                br {}
+                label {
+                    class: "central-div-label",
+                    i {
+                        class: "material-icons",
+                        onclick: move |_| {
+                            dioxus_desktop::use_window(cx).close();
+                        },
+                        "cancel"
+                    },
+                    "Cancel the operation"
+                },
+                span { },
+                label {
+                    class: "central-div-label",
+                    input {
+                        r#type: "checkbox",
+                        checked: "{enable_rename_field}",
+                        id: "enable_rename_field",
+                        oninput: move |check_event| {
+                            enable_rename_field.set(check_event.value.parse().unwrap());
+                        }
+                    }
+                    "Check if you wish to rename your new file/directory."
+                },
+
+                if enable_rename_field.get() == &true {
+                    rsx!(
+                        br {}, br {},
+                        input {
+                            r#type: "text",
+                            placeholder: "Directory/File new name",
+                            id: "directory-file-name",
+                            oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() }
+                        },
+                        br {},
+                        i {
+                            class: "material-icons",
+                            onclick: move |_| {
+                                create_operation::execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME, enable_file_creation_props);
+                                dioxus_desktop::use_window(cx).close();
+                            },
+                            "check_circle"
+                        }
+                    )
+                }
             }
         }
     })

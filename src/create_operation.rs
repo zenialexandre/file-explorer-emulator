@@ -19,10 +19,11 @@ pub(crate) fn execute_create_operation(files: &UseRef<Files>, new_file_or_dir_na
     return true;
 }
 
-fn create_process(selected_current_stack: String, new_file_or_dir_name: &Mutex<String>, enable_file_creation: &UseState<bool>) {
+fn create_process(mut selected_current_stack: String, new_file_or_dir_name: &Mutex<String>, enable_file_creation: &UseState<bool>) {
     if enable_file_creation.get() == &true {
         verify_extension(selected_current_stack.clone(), new_file_or_dir_name);
     } else {
+        selected_current_stack.push_str(format!("\\{}", new_file_or_dir_name.lock().unwrap()).as_str().trim());
         add_new_dir(selected_current_stack.clone(), is_recursive_dir(new_file_or_dir_name.lock().unwrap().as_str().trim()));
     }
 }
