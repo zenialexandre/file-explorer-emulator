@@ -16,3 +16,5 @@ Ctrl + R = Rename
 Ctrl + C = Copy
 
 Ctrl + V = Paste
+
+Ctrl + X = Cut
