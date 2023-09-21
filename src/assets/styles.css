@@ -4,6 +4,7 @@
     font-family: 'Rubik', sans-serif;
     user-select: none;
     transition: .2s all;
+    outline: none;
 }
 
 body {
@@ -51,9 +52,12 @@ main {
 .folder h1 {
     position: relative;
     display: block;
-    top: -10px;
-    font-size: 15px;
+    top: -5px;
+    font-size: 13px;
     font-weight: 12px;
+
+    text-align: center;
+    padding-right: -7px;
 }
 
 .folder p.cooltip {

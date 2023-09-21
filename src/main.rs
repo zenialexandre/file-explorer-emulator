@@ -52,13 +52,10 @@ fn app(cx: Scope) -> Element {
     cx.render(rsx! {
         div {
             id: "main-div",
+            autofocus: "true",
             tabindex: "0",
             onmounted: move |element| { main_element.write().push(element); },
-            onclick: move |_| {
-                if let Some(element) = main_element.read().last() {
-                    element.set_focus(true);
-                }
-            },
+            onclick: move |_| { window_helper::set_element_focus(main_element) },
             onkeydown: move |keydown_event| {
                 if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
                     let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
@@ -125,6 +122,7 @@ fn app(cx: Scope) -> Element {
                                                 window_helper::open_file(selected_full_path.clone().as_str());
                                             } else if path_metadata.is_dir() {
                                                 files.write().enter_directory(directory_id);
+                                                window_helper::set_element_focus(main_element);
                                             }
                                         },
                                         Err(error) => panic!("{}", error)
@@ -169,6 +167,7 @@ fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &
                 div {
                     class: "forms-div",
                     input {
+                        autofocus: "true",
                         r#type: "text",
                         placeholder: "Directory/File new name",
                         id: "directory-file-name",
@@ -304,6 +303,7 @@ fn conflict_popup(cx: Scope, files_props: UseRef<Files>, enable_file_creation_pr
                     rsx!(
                         br {}, br {},
                         input {
+                            autofocus: "true",
                             r#type: "text",
                             placeholder: "Directory/File new name",
                             id: "directory-file-name",

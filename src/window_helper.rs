@@ -110,3 +110,9 @@ pub(crate) fn get_selected_current_stack(files: &UseRef<Files>) -> String {
 pub(crate) fn open_file(selected_path: &str) {
     let _ = opener::open(selected_path);
 }
+
+pub(crate) fn set_element_focus(main_element: &UseRef<Vec<Event<MountedData>>>) {
+    if let Some(element) = main_element.read().last() {
+        element.set_focus(true);
+    }
+}
