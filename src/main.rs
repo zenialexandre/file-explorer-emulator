@@ -37,7 +37,7 @@ fn main() {
         app,
         Config::default().with_disable_context_menu(true).with_window(WindowBuilder::new()
             .with_resizable(true).with_title("File Explorer Emulator")
-            .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(1000.0, 800.0))
+            .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(800.0, 600.0))
             .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
             .with_theme(Option::from(dioxus_desktop::tao::window::Theme::Dark))
             .with_focused(true)
@@ -51,6 +51,23 @@ fn app(cx: Scope) -> Element {
 
     cx.render(rsx! {
         div {
+            id: "main-div",
+            tabindex: "0",
+            onmounted: move |element| { main_element.write().push(element); },
+            onclick: move |_| {
+                if let Some(element) = main_element.read().last() {
+                    element.set_focus(true);
+                }
+            },
+            onkeydown: move |keydown_event| {
+                if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
+                    let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
+                        create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
+                    window_helper::create_new_dom_generic_window(cx, create_dom, "Create",);
+                } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
+                    copy_and_paste_operation::execute_paste_operation(files, &PREVIOUS_OPERATION_DONE);
+                }
+            },
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
             style { include_str!("./assets/styles.css") }
             header {
@@ -61,31 +78,19 @@ fn app(cx: Scope) -> Element {
                 i { class: "material-icons", onclick: move |_| dioxus_desktop::use_window(cx).close(), "cancel" }
             },
             div {
-                tabindex: "0",
-                onmounted: move |element| { main_element.write().push(element); },
-                onclick: move |_| {
-                    if let Some(element) = main_element.read().last() {
-                        element.set_focus(true);
-                    }
-                },
-                onkeydown: move |keydown_event| {
-                    if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
-                        let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
-                            create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
-                        window_helper::create_new_dom_generic_window(cx, create_dom, "Create",);
-                    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
-                        copy_and_paste_operation::execute_paste_operation(files, &PREVIOUS_OPERATION_DONE);
-                    }
-                },
                 main {
                     files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
-                        let path_end = path.split('\\').last().unwrap_or(path.as_str());
+                        let mut path_end = path.split('\\').last().unwrap_or(path.as_str());
                         let icon_type: String = window_helper::get_icon_type(path.to_string());
                         let file_type: String = window_helper::get_file_type_formatted(path.to_string());
                         let path_metadata = std::fs::metadata(path.to_string());
                         let file_size: u64 = window_helper::get_file_size(path.to_string());
                         let mut last_modification_date_utc: DateTime<Utc> = Default::default();
                         let mut _last_modification_date_formatted: String = String::new();
+
+                        if path_end.len() > 40 {
+                            (path_end, _) = path_end.split_at(40);
+                        }
 
                         if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
                             last_modification_date_utc = path_metadata.into();
@@ -131,8 +136,8 @@ fn app(cx: Scope) -> Element {
                                                 }
                                             },
                                             onclick: move |_| { *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id; },
-                                            td { i { class: "material-icons", "{icon_type}" } },
-                                            td { class: "explorer-tbody-td", h1 { "{path_end}" } },
+                                            td { class: "explorer-tbody-td", i { class: "material-icons", "{icon_type}" } },
+                                            td { class: "explorer-tbody-td", h1 { "{path_end}" }, },
                                             td { class: "explorer-tbody-td", h1 { "{_last_modification_date_formatted}" } },
                                             td { class: "explorer-tbody-td", h1 { "{file_type}" } },
                                             if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {

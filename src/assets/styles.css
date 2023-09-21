@@ -8,6 +8,7 @@
 
 body {
     padding-top: 77px;
+    background-color: white;
 }
 
 main {
@@ -20,9 +21,10 @@ main {
 .explorer-table {
     height: auto;
     width: auto;
+    padding: 0;
     border-collapse: separate;
-    border-spacing: 2px;
-    border: 1px solid #ccc;
+    border-spacing: 1px;
+    border: 0px solid #ccc;
     margin-top: 20px;
 }
 
@@ -32,6 +34,7 @@ main {
 
 .explorer-tbody td {
     padding: 0px;
+    max-width: 350px;
 }
 
 .folder * {
@@ -40,7 +43,7 @@ main {
 
 .folder {
     float: left;
-    width: 100px;
+    width: 50px;
     height: auto;
     /* //padding: 20px; */
     margin-right: 50px;
@@ -51,8 +54,8 @@ main {
 }
 
 .folder:hover h1 {
-    background-color: #c6c6c6;
-    opacity: 0.3;
+    background-color: #bfbfbf;
+    opacity: 0.5;
     border-radius: 5px;
 }
 
@@ -75,45 +78,7 @@ main {
     font-weight: 5px;
     text-align: left;
     padding-left: 50px;
-}
-
-div.properties {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    /*z-index: 10px;*/
-    width: 300px;
-    background-color: white;
-}
-
-div.properties:before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 300px;
-    bottom: 0;
-    background-color: #212121;
-    opacity: .5;
-    overflow: hidden;
-}
-
-div.properties img {
-    position: relative;
-    top: -1px;
-    left: -1px;
-    width: 110%;
-    height: 200px;
-    filter: blur(2px);
-}
-
-div.properties h1 {
-    position: relative;
-    width: 100%;
-    text-align: left;
-    margin-left: 20px;
-    color: white;
+    color: black;
 }
 
 header {
