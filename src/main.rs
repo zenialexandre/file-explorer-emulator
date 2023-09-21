@@ -102,51 +102,41 @@ fn app(cx: Scope) -> Element {
                             div {
                                 class: "folder",
                                 key: "{path}",
-                                table {
-                                    class: "explorer-table",
-                                    tbody {
-                                        class: "explorer-tbody",
-                                        tr {
-                                            tabindex: "0",
-                                            onkeydown: move |keydown_event| {
-                                                if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
-                                                    let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
-                                                        create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
-                                                    window_helper::create_new_dom_generic_window(cx, rename_dom, "Rename");
-                                                } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
-                                                    let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
-                                                    window_helper::create_new_dom_generic_window(cx, delete_dom, "Delete");
-                                                } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyC {
-                                                    copy_and_paste_operation::execute_copy_operation(files, &CLICKED_DIRECTORY_ID);
-                                                } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyX {
-                                                    cut_operation::execute_cut_operation(files, &CLICKED_DIRECTORY_ID);
-                                                }
-                                            },
-                                            ondblclick: move |_| {
-                                                let selected_full_path = window_helper::get_selected_full_path(files, &CLICKED_DIRECTORY_ID);
-                                                match std::fs::metadata(selected_full_path.clone()) {
-                                                    Ok(path_metadata) => {
-                                                        if path_metadata.is_file() {
-                                                            window_helper::open_file(selected_full_path.clone().as_str());
-                                                        } else if path_metadata.is_dir() {
-                                                            files.write().enter_directory(directory_id);
-                                                        }
-                                                    },
-                                                    Err(error) => panic!("{}", error)
-                                                }
-                                            },
-                                            onclick: move |_| { *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id; },
-                                            td { class: "explorer-tbody-td", i { class: "material-icons", "{icon_type}" } },
-                                            td { class: "explorer-tbody-td", h1 { "{path_end}" }, },
-                                            td { class: "explorer-tbody-td", h1 { "{_last_modification_date_formatted}" } },
-                                            td { class: "explorer-tbody-td", h1 { "{file_type}" } },
-                                            if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
-                                                rsx!( td { class: "explorer-tbody-td", h1 { "{file_size} KB" } } )
-                                            } else {
-                                                rsx!( td { class: "explorer-tbody-td", h1 { " " } } )
-                                            }
-                                        }
+                                tabindex: "0",
+                                onkeydown: move |keydown_event| {
+                                    if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
+                                        let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
+                                            create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
+                                        window_helper::create_new_dom_generic_window(cx, rename_dom, "Rename");
+                                    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
+                                        let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
+                                        window_helper::create_new_dom_generic_window(cx, delete_dom, "Delete");
+                                    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyC {
+                                        copy_and_paste_operation::execute_copy_operation(files, &CLICKED_DIRECTORY_ID);
+                                    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyX {
+                                        cut_operation::execute_cut_operation(files, &CLICKED_DIRECTORY_ID);
                                     }
+                                },
+                                ondblclick: move |_| {
+                                    let selected_full_path = window_helper::get_selected_full_path(files, &CLICKED_DIRECTORY_ID);
+                                    match std::fs::metadata(selected_full_path.clone()) {
+                                        Ok(path_metadata) => {
+                                            if path_metadata.is_file() {
+                                                window_helper::open_file(selected_full_path.clone().as_str());
+                                            } else if path_metadata.is_dir() {
+                                                files.write().enter_directory(directory_id);
+                                            }
+                                        },
+                                        Err(error) => panic!("{}", error)
+                                    }
+                                },
+                                onclick: move |_| { *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id; },
+                                i { class: "material-icons", "{icon_type}" },
+                                h1 { "{path_end}" },
+                                p { class: "cooltip", "{_last_modification_date_formatted}" },
+                                p { class: "cooltip", "{file_type}" },
+                                if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
+                                    rsx!( p { class: "cooltip", "{file_size} KB" } )
                                 }
                             }
                         )
