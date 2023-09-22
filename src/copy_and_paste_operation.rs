@@ -1,11 +1,14 @@
-use std::{io};
-use std::fs::{File};
+use std::io;
+use std::fs::File;
 use std::ops::Not;
 use std::string::ToString;
-use std::sync::{Mutex};
-use dioxus::hooks::{UseRef};
+use std::sync::Mutex;
+use dioxus::hooks::UseRef;
 use fs_extra::dir::CopyOptions;
-use crate::{conflict_process, create_operation, cut_operation, Files, PREVIOUS_OPERATION_DONE, REGULAR_FILE, window_helper};
+
+use crate::Files;
+use crate::{conflict_process, create_operation, cut_operation, window_helper};
+use crate::{PREVIOUS_OPERATION_DONE, REGULAR_FILE};
 
 lazy_static! { pub(crate) static ref COPIED_FILE_OR_DIR_NAME: Mutex<Vec<String>> = Mutex::new(Vec::new()); }
 lazy_static! { pub(crate) static ref COPY_INCREMENTAL_ID: Mutex<u32> = Mutex::new(0); }

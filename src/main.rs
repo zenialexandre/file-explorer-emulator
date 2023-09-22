@@ -5,27 +5,27 @@ mod create_operation;
 mod copy_and_paste_operation;
 mod conflict_process;
 mod cut_operation;
+mod context_menu;
 
-use std::ops::Not;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
-use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 use dioxus::html::input_data::keyboard_types::{Code, Modifiers};
-use std::sync::{Mutex};
+use std::sync::Mutex;
 use chrono::{DateTime, Utc};
-use dioxus::html::geometry::{Coordinates, PagePoint};
-use dioxus_desktop::tao::dpi::PhysicalPosition;
-use dioxus_desktop::tao::window::WindowId;
 
+use crate::context_menu::{context_menu_popup, context_menu_popupProps};
+use crate::delete_operation::{delete_popup, delete_popupProps};
+use crate::create_operation::{create_rename_popup, create_rename_popupProps};
+use crate::conflict_process::{conflict_popup, conflict_popupProps};
 use crate::copy_and_paste_operation::COPY_INCREMENTAL_ID;
+use crate::context_menu::IS_CONTEXT_ON_ITEM;
 
 #[macro_use]
 extern crate lazy_static;
 
-lazy_static! { static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0); }
-lazy_static! { static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string()); }
-lazy_static! { static ref PREVIOUS_OPERATION_DONE: Mutex<String> = Mutex::new("".to_string()); }
-lazy_static! { static ref CONTEXT_MENU_ID: Mutex<Vec<WindowId>> = Mutex::new(Vec::new()); }
+lazy_static! { pub(crate) static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0); }
+lazy_static! { pub(crate) static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string()); }
+lazy_static! { pub(crate) static ref PREVIOUS_OPERATION_DONE: Mutex<String> = Mutex::new("".to_string()); }
 
 const REGULAR_FILE: &str = "Regular File";
 
@@ -62,14 +62,14 @@ fn app(cx: Scope) -> Element {
             onmounted: move |element| { main_element.write().push(element); },
             onclick: move |_| {
                 window_helper::set_element_focus(main_element);
-                window_helper::close_context_menu(cx, context_menu_active);
+                context_menu::close_context_menu(cx, context_menu_active);
                 context_menu_active.set(false);
             },
             onkeydown: move |keydown_event| {
                 if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
                     let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
                         create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
-                    window_helper::create_new_dom_generic_window(cx, create_dom, "Create",);
+                    window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
                 } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
                     copy_and_paste_operation::execute_paste_operation(files, &PREVIOUS_OPERATION_DONE);
                 }
@@ -83,23 +83,23 @@ fn app(cx: Scope) -> Element {
                 span { }
                 i { class: "material-icons", onclick: move |_| {
                     dioxus_desktop::use_window(cx).close();
-                    window_helper::close_context_menu_on_demand(cx);
+                    context_menu::close_context_menu_on_demand(cx);
                 }, "cancel" }
             },
             div {
                 onclick: move |_| {
-                    window_helper::close_context_menu(cx, context_menu_active);
+                    context_menu::close_context_menu(cx, context_menu_active);
                     context_menu_active.set(false);
                 },
                 oncontextmenu: move |context_menu_event| {
                     context_menu_event.stop_propagation();
-                    window_helper::close_context_menu_on_demand(cx);
+                    context_menu::close_context_menu_on_demand(cx);
                     context_menu_active.set(true);
-                    *CLICKED_DIRECTORY_ID.lock().unwrap() = 0;
+                    *IS_CONTEXT_ON_ITEM.lock().unwrap() = false;
 
                     let context_menu_dom: VirtualDom = VirtualDom::new_with_props(context_menu_popup,
                         context_menu_popupProps { files_props: files.clone() });
-                    window_helper::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
+                    context_menu::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
                 },
                 main {
                     files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
@@ -156,18 +156,19 @@ fn app(cx: Scope) -> Element {
                                 },
                                 onclick: move |_| {
                                     *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
-                                    window_helper::close_context_menu(cx, context_menu_active);
+                                    context_menu::close_context_menu(cx, context_menu_active);
                                     context_menu_active.set(false);
                                 },
                                 oncontextmenu: move |context_menu_event| {
                                     context_menu_event.stop_propagation();
-                                    window_helper::close_context_menu_on_demand(cx);
+                                    context_menu::close_context_menu_on_demand(cx);
                                     context_menu_active.set(true);
                                     *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
+                                    *IS_CONTEXT_ON_ITEM.lock().unwrap() = true;
 
                                     let context_menu_dom: VirtualDom = VirtualDom::new_with_props(context_menu_popup,
                                         context_menu_popupProps { files_props: files.clone() });
-                                    window_helper::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
+                                    context_menu::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
                                 },
                                 i { class: "material-icons", "{icon_type}" },
                                 h1 { "{path_end}" },
@@ -190,229 +191,6 @@ fn app(cx: Scope) -> Element {
                 }
             }
         }
-    })
-}
-
-#[inline_props]
-fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &'a str) -> Element {
-    let enable_file_creation = use_state(cx, || false);
-
-    cx.render(rsx! {
-        div {
-            link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
-            style { include_str!("./assets/create_rename_popup.css") }
-            div {
-                class: "central-div",
-                h1 { "Enter new directory/file name: " },
-                div {
-                    class: "forms-div",
-                    input {
-                        autofocus: "true",
-                        r#type: "text",
-                        placeholder: "Directory/File new name",
-                        id: "directory-file-name",
-                        oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() }
-                    },
-                    if title_props == &"Create" {
-                        rsx!(
-                            br {}, br {},
-                            label {
-                                input {
-                                    r#type: "checkbox",
-                                    checked: "{enable_file_creation}",
-                                    id: "enable-file-creation",
-                                    oninput: move |check_event| {
-                                        enable_file_creation.set(check_event.value.parse().unwrap());
-                                    }
-                                }
-                                "Check if the new content is a file."
-                            },
-                            br {},
-                        )
-                    }
-                    br {},
-                    i {
-                        class: "material-icons",
-                        onclick: move |_| {
-                           dioxus_desktop::use_window(cx).close();
-                        },
-                        "cancel"
-                    },
-                    i {
-                        class: "material-icons",
-                        onclick: move |_| {
-                            if *NEW_FILE_OR_DIR_NAME.lock().unwrap().trim() != "".to_string() {
-                                match title_props.as_ref() {
-                                    "Rename" => rename_operation::execute_rename_operation(files_props, &CLICKED_DIRECTORY_ID, &NEW_FILE_OR_DIR_NAME),
-                                    "Create" => {
-                                        if create_operation::execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME, enable_file_creation).not() {
-                                            let conflict_dom: VirtualDom = VirtualDom::new_with_props(conflict_popup, conflict_popupProps
-                                                { files_props: files_props.clone(), enable_file_creation_props: enable_file_creation.clone() });
-                                            window_helper::create_new_dom_generic_window_state(cx, conflict_dom, "Conflict");
-                                        }
-                                    },
-                                    _ => println!("Something gone wrong.")
-                                }
-                                dioxus_desktop::use_window(cx).close();
-                            }
-                        },
-                        "check_circle"
-                    }
-                }
-            }
-        }
-    })
-}
-
-#[inline_props]
-fn delete_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
-    cx.render(rsx! {
-        div {
-            link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
-            style { include_str!("./assets/delete_popup.css") },
-            div {
-                class: "central-div",
-                i { class: "material-icons", {}, "warning" }
-                h1 { "Do you really wish to delete this file/directory? " }
-                br {}
-                i {
-                    class: "material-icons",
-                    onclick: move |_| {
-                        dioxus_desktop::use_window(cx).close();
-                    },
-                    "cancel"
-                },
-                i {
-                    class: "material-icons",
-                    onclick: move |_| {
-                        delete_operation::execute_delete_operation(files_props, &CLICKED_DIRECTORY_ID);
-                        dioxus_desktop::use_window(cx).close();
-                    },
-                    "check_circle"
-                }
-            }
-        }
-    })
-}
-
-#[inline_props]
-fn conflict_popup(cx: Scope, files_props: UseRef<Files>, enable_file_creation_props: UseState<bool>) -> Element {
-    let enable_rename_field = use_state(cx, || false);
-
-    cx.render(rsx! {
-        div {
-            link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
-            style { include_str!("./assets/conflict_popup.css") }
-            div {
-                class: "central-div",
-                i { class: "material-icons", {}, "warning" }
-                h1 { "Your operation generated a conflict!" }
-                br {}
-                label {
-                    class: "central-div-label",
-                    i {
-                        class: "material-icons",
-                        onclick: move |_| {
-                            dioxus_desktop::use_window(cx).close();
-                        },
-                        "cancel"
-                    },
-                    "Cancel the operation"
-                },
-                span { },
-                label {
-                    class: "central-div-label",
-                    input {
-                        r#type: "checkbox",
-                        checked: "{enable_rename_field}",
-                        id: "enable_rename_field",
-                        oninput: move |check_event| {
-                            enable_rename_field.set(check_event.value.parse().unwrap());
-                        }
-                    }
-                    "Check if you wish to rename your new file/directory."
-                },
-
-                if enable_rename_field.get() == &true {
-                    rsx!(
-                        br {}, br {},
-                        input {
-                            autofocus: "true",
-                            r#type: "text",
-                            placeholder: "Directory/File new name",
-                            id: "directory-file-name",
-                            oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() }
-                        },
-                        br {},
-                        i {
-                            class: "material-icons",
-                            onclick: move |_| {
-                                create_operation::execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME, enable_file_creation_props);
-                                dioxus_desktop::use_window(cx).close();
-                            },
-                            "check_circle"
-                        }
-                    )
-                }
-            }
-        }
-    })
-}
-
-#[inline_props]
-fn context_menu_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
-    let context_menu_element: &UseRef<Vec<Event<MountedData>>> = use_ref(cx, || Vec::new());
-    CONTEXT_MENU_ID.lock().unwrap().push(dioxus_desktop::use_window(cx).id());
-
-    cx.render(rsx! {
-        div {
-            autofocus: "true",
-            tabindex: "0",
-            onmounted: move |mounted_event| {
-                mounted_event.set_focus(true);
-            },
-            link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
-            style { include_str!("./assets/context_menu_popup.css") }
-            div {
-                class: "context-menu",
-                div { class: "context-menu-item", label { i { class: "material-icons", onclick: move |_| {
-                    dioxus_desktop::use_window(cx).close();
-                    if create_operation::execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME, enable_file_creation).not() {
-                        let conflict_dom: VirtualDom = VirtualDom::new_with_props(conflict_popup, conflict_popupProps
-                            { files_props: files_props.clone(), enable_file_creation_props: enable_file_creation.clone() });
-                        window_helper::create_new_dom_generic_window_state(cx, conflict_dom, "Conflict");
-                    }
-                }, "folder" }, "New / Ctrl+N" } },
-                div { class: "context-menu-item", label { i { class: "material-icons", onclick: move |_| {
-                    dioxus_desktop::use_window(cx).close();
-                    copy_and_paste_operation::execute_paste_operation(files_props, &PREVIOUS_OPERATION_DONE);
-                }, "content_paste" }, "Paste / Ctrl+V" } },
-
-                if (&CLICKED_DIRECTORY_ID.lock().unwrap().to_string().eq("0")).not() {
-                    rsx!(
-                        div { class: "context-menu-item", label { i { class: "material-icons", onclick: move |_| {
-                            dioxus_desktop::use_window(cx).close();
-                            copy_and_paste_operation::execute_copy_operation(files_props, &CLICKED_DIRECTORY_ID);
-                        }, "content_copy" }, "Copy / Ctrl+C" } },
-                        div { class: "context-menu-item", label { i { class: "material-icons" , onclick: move |_| {
-                            dioxus_desktop::use_window(cx).close();
-                            cut_operation::execute_cut_operation(files_props, &CLICKED_DIRECTORY_ID);
-                        }, "content_cut" }, "Cut / Ctrl+X" } },
-                        div { class: "context-menu-item", label { i { class: "material-icons" , onclick: move |_| {
-                            dioxus_desktop::use_window(cx).close();
-                            let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
-                                create_rename_popupProps { files_props: files_props.clone(), title_props: "Rename" });
-                            window_helper::create_new_dom_generic_window_state(cx.scope, rename_dom, "Rename");
-                        }, "edit" }, "Rename / Ctrl+R" } },
-                        div { class: "context-menu-item", onclick: move |_| {
-                            dioxus_desktop::use_window(cx).close();
-                            let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files_props.clone() });
-                            window_helper::create_new_dom_generic_window_state(cx.scope, delete_dom, "Delete");
-                        }, label { i { class: "material-icons", "delete" }, "Delete / Ctrl+D" } },
-                    )
-                }
-            }
-        },
     })
 }
 

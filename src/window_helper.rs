@@ -1,15 +1,11 @@
-use std::ops::{Not};
 use dioxus::prelude::*;
 use dioxus_desktop::tao::window::{Icon as TaoIcon};
 use image::GenericImageView;
 use std::sync::Mutex;
-use dioxus::html::geometry::ClientPoint;
 use dioxus_desktop::{Config, WindowBuilder};
-use dioxus_desktop::tao::dpi::PhysicalPosition;
 use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
-use dioxus_desktop::tao::window::Theme::Dark;
 
-use crate::{CONTEXT_MENU_ID, Files};
+use crate::Files;
 
 pub(crate) fn load_icon_by_path(file_path: &str) -> Option<TaoIcon> {
     return if let Ok(image) = image::open(file_path) {
@@ -128,28 +124,5 @@ pub(crate) fn open_file(selected_path: &str) {
 pub(crate) fn set_element_focus(main_element: &UseRef<Vec<Event<MountedData>>>) {
     if let Some(element) = main_element.read().last() {
         element.set_focus(true);
-    }
-}
-
-pub(crate) fn create_context_menu(cx: Scope, context_menu_dom: VirtualDom, context_menu_position: ClientPoint) {
-    dioxus_desktop::use_window(cx).new_window(context_menu_dom, Config::default()
-        .with_window(WindowBuilder::new().with_position(PhysicalPosition::new(context_menu_position.x, context_menu_position.y))
-            .with_resizable(false).with_focused(true)
-            .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false).with_title("")
-            .with_window_icon(load_icon_by_path("src/images/icon/cool_circle.png"))
-            .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(270.0, 330.0)))
-            .with_disable_context_menu(true)
-    );
-}
-
-pub(crate) fn close_context_menu(cx: Scope, context_menu_active: &UseState<bool>) {
-    if (context_menu_active.get()).not() && CONTEXT_MENU_ID.lock().unwrap().len() > 0 {
-        dioxus_desktop::use_window(cx).close_window(CONTEXT_MENU_ID.lock().unwrap().pop().unwrap());
-    }
-}
-
-pub(crate) fn close_context_menu_on_demand(cx: Scope) {
-    if CONTEXT_MENU_ID.lock().unwrap().len() > 0 {
-        dioxus_desktop::use_window(cx).close_window(CONTEXT_MENU_ID.lock().unwrap().pop().unwrap());
     }
 }

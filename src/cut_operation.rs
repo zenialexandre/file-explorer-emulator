@@ -1,6 +1,9 @@
 use std::sync::Mutex;
 use dioxus::prelude::UseRef;
-use crate::{copy_and_paste_operation, Files, PREVIOUS_OPERATION_DONE};
+
+use crate::Files;
+use crate::copy_and_paste_operation;
+use crate::PREVIOUS_OPERATION_DONE;
 
 pub(crate) fn execute_cut_operation(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) {
     copy_and_paste_operation::execute_copy_operation(files, clicked_directory_id);
