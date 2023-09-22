@@ -100,6 +100,16 @@ pub(crate) fn create_new_dom_generic_window(cx: Scope, generic_dom: VirtualDom, 
     );
 }
 
+pub(crate) fn create_new_dom_generic_window_state(cx: &ScopeState, generic_dom: VirtualDom, generic_window_name: &str) {
+    dioxus_desktop::use_window(cx).new_window(generic_dom, Config::default()
+        .with_window(WindowBuilder::new()
+            .with_resizable(false).with_focused(true)
+            .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false)
+            .with_window_icon(load_icon_by_path("src/images/icon/cool_circle.png"))
+            .with_title(generic_window_name).with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(600.0, 300.0)))
+    );
+}
+
 pub(crate) fn get_selected_full_path(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) -> String {
     let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
     let selected_full_path: String = files.read().path_names[converted_clicked_directory_id].to_string();
