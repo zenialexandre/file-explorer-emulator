@@ -1,0 +1,42 @@
+* {
+    background: black;
+    font-family: 'Rubik', sans-serif;
+    outline: none;
+}
+
+.context-menu {
+    position: absolute;
+    text-align: left;
+    border: 1px solid black;
+    background: black;
+    width: 250px;
+    height: 300px;
+}
+
+.context-menu div {
+    padding-bottom: 7px;
+    padding-top: 7px;
+    border: 1px solid black;
+    flex-direction: row;
+}
+
+.context-menu-item {
+    padding: 8px 10px;
+}
+
+.context-menu-item label {
+   text-decoration: none;
+   color: white;
+   font-size: 13px;
+   padding-top: -10px;
+}
+
+.context-menu-item i {
+    width: 5px;
+    padding-right: 25px;
+    padding-top: 5px;
+}
+
+.context-menu-item:hover {
+    background: darkgray;
+}

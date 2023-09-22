@@ -1,12 +1,15 @@
-use std::ops::Not;
+use std::ops::{Not};
 use dioxus::prelude::*;
-use dioxus_desktop::tao::window::Icon as TaoIcon;
+use dioxus_desktop::tao::window::{Icon as TaoIcon};
 use image::GenericImageView;
 use std::sync::Mutex;
+use dioxus::html::geometry::ClientPoint;
 use dioxus_desktop::{Config, WindowBuilder};
+use dioxus_desktop::tao::dpi::PhysicalPosition;
 use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
+use dioxus_desktop::tao::window::Theme::Dark;
 
-use crate::{Files};
+use crate::{CONTEXT_MENU_ID, Files};
 
 pub(crate) fn load_icon_by_path(file_path: &str) -> Option<TaoIcon> {
     return if let Ok(image) = image::open(file_path) {
@@ -118,33 +121,25 @@ pub(crate) fn set_element_focus(main_element: &UseRef<Vec<Event<MountedData>>>) 
     }
 }
 
-pub(crate) fn create_context_menu<'a>(context_menu_triggered: &'a UseState<bool>, context_menu_position_x: &'a UseState<f64>,
-                                      context_menu_position_y: &'a UseState<f64>, clicked_directory_id: &'a Mutex<usize>) -> LazyNodes<'a, 'a> {
-    println!("{}", context_menu_position_x);
-    println!("{}", context_menu_position_y);
+pub(crate) fn create_context_menu(cx: Scope, context_menu_dom: VirtualDom, context_menu_position: ClientPoint) {
+    dioxus_desktop::use_window(cx).new_window(context_menu_dom, Config::default()
+        .with_window(WindowBuilder::new().with_position(PhysicalPosition::new(context_menu_position.x, context_menu_position.y))
+            .with_resizable(false).with_focused(true)
+            .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false).with_title("")
+            .with_window_icon(load_icon_by_path("src/images/icon/cool_circle.png"))
+            .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(270.0, 330.0)))
+            .with_disable_context_menu(true)
+    );
+}
 
-    if context_menu_triggered.get() == &true {
-        rsx!(
-            div {
-                class: "context-menu",
-                position: "fixed",
-                top: "{context_menu_position_y}",
-                left: "{context_menu_position_x}",
-                label { i { class: "material-icons", onclick: move |_| { }, "folder" }, "New" },
-                label { i { class: "material-icons", onclick: move |_| { }, "content_paste" }, "Paste" },
+pub(crate) fn close_context_menu(cx: Scope, context_menu_active: &UseState<bool>) {
+    if (context_menu_active.get()).not() && CONTEXT_MENU_ID.lock().unwrap().len() > 0 {
+        dioxus_desktop::use_window(cx).close_window(CONTEXT_MENU_ID.lock().unwrap().pop().unwrap());
+    }
+}
 
-                if (clicked_directory_id.lock().unwrap().to_string().eq("0")).not() {
-                    rsx!(
-                        label { i { class: "material-icons", onclick: move |_| { }, "content_copy" }, "Copy" },
-                        label { i { class: "material-icons" , onclick: move |_| { }, "content_cut" }, "Cut" },
-                        label { i { class: "material-icons" , onclick: move |_| { }, "signature"}, "Rename" },
-                        label { i { class: "material-icons", onclick: move |_| { }, "delete" }, "Delete" }
-                    )
-                }
-
-            },
-        )
-    } else {
-        rsx!( h1 {""} )
+pub(crate) fn close_context_menu_on_demand(cx: Scope) {
+    if CONTEXT_MENU_ID.lock().unwrap().len() > 0 {
+        dioxus_desktop::use_window(cx).close_window(CONTEXT_MENU_ID.lock().unwrap().pop().unwrap());
     }
 }
