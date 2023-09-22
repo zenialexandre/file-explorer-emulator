@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use dioxus_desktop::tao::window::{Icon as TaoIcon};
 use image::GenericImageView;
 use std::sync::Mutex;
-use dioxus_desktop::{Config, WindowBuilder};
+use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
 use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 
 use crate::Files;
@@ -92,7 +92,7 @@ pub(crate) fn create_new_dom_generic_window(cx: Scope, generic_dom: VirtualDom, 
             .with_resizable(false).with_focused(true)
             .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false)
             .with_window_icon(load_icon_by_path("src/images/icon/cool_circle.png"))
-            .with_title(generic_window_name).with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(600.0, 300.0)))
+            .with_title(generic_window_name).with_inner_size(LogicalSize::new(600.0, 300.0)))
     );
 }
 
@@ -102,7 +102,7 @@ pub(crate) fn create_new_dom_generic_window_state(cx: &ScopeState, generic_dom: 
             .with_resizable(false).with_focused(true)
             .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false)
             .with_window_icon(load_icon_by_path("src/images/icon/cool_circle.png"))
-            .with_title(generic_window_name).with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(600.0, 300.0)))
+            .with_title(generic_window_name).with_inner_size(LogicalSize::new(600.0, 300.0)))
     );
 }
 

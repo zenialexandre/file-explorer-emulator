@@ -8,10 +8,11 @@ mod cut_operation;
 mod context_menu;
 
 use dioxus::prelude::*;
-use dioxus_desktop::{Config, WindowBuilder};
+use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
 use dioxus::html::input_data::keyboard_types::{Code, Modifiers};
 use std::sync::Mutex;
 use chrono::{DateTime, Utc};
+use dioxus_desktop::tao::dpi::LogicalPosition;
 
 use crate::context_menu::{context_menu_popup, context_menu_popupProps};
 use crate::delete_operation::{delete_popup, delete_popupProps};
@@ -41,9 +42,9 @@ fn main() {
         app,
         Config::default().with_disable_context_menu(true).with_window(WindowBuilder::new()
             .with_resizable(true).with_title("File Explorer Emulator")
-            .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(800.0, 600.0))
+            .with_inner_size(LogicalSize::new(800.0, 600.0))
+            .with_position(LogicalPosition::new(100, 50))
             .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
-            .with_theme(Option::from(dioxus_desktop::tao::window::Theme::Dark))
             .with_focused(true)
         )
     );
@@ -60,9 +61,10 @@ fn app(cx: Scope) -> Element {
             autofocus: "true",
             tabindex: "0",
             onmounted: move |element| { main_element.write().push(element); },
-            onclick: move |_| {
-                window_helper::set_element_focus(main_element);
+            onclick: move |click_event| {
+                click_event.stop_propagation();
                 context_menu::close_context_menu(cx, context_menu_active);
+                window_helper::set_element_focus(main_element);
                 context_menu_active.set(false);
             },
             onkeydown: move |keydown_event| {
@@ -73,6 +75,16 @@ fn app(cx: Scope) -> Element {
                 } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
                     copy_and_paste_operation::execute_paste_operation(files, &PREVIOUS_OPERATION_DONE);
                 }
+            },
+            oncontextmenu: move |context_menu_event| {
+                context_menu_event.stop_propagation();
+                context_menu::close_context_menu_on_demand(cx);
+                context_menu_active.set(true);
+                *IS_CONTEXT_ON_ITEM.lock().unwrap() = false;
+
+                let context_menu_dom: VirtualDom = VirtualDom::new_with_props(context_menu_popup,
+                    context_menu_popupProps { files_props: files.clone() });
+                context_menu::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
             },
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
             style { include_str!("./assets/styles.css") }
@@ -87,20 +99,6 @@ fn app(cx: Scope) -> Element {
                 }, "cancel" }
             },
             div {
-                onclick: move |_| {
-                    context_menu::close_context_menu(cx, context_menu_active);
-                    context_menu_active.set(false);
-                },
-                oncontextmenu: move |context_menu_event| {
-                    context_menu_event.stop_propagation();
-                    context_menu::close_context_menu_on_demand(cx);
-                    context_menu_active.set(true);
-                    *IS_CONTEXT_ON_ITEM.lock().unwrap() = false;
-
-                    let context_menu_dom: VirtualDom = VirtualDom::new_with_props(context_menu_popup,
-                        context_menu_popupProps { files_props: files.clone() });
-                    context_menu::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
-                },
                 main {
                     files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
                         let mut path_end = path.split('\\').last().unwrap_or(path.as_str());
@@ -154,10 +152,11 @@ fn app(cx: Scope) -> Element {
                                         Err(error) => panic!("{}", error)
                                     }
                                 },
-                                onclick: move |_| {
-                                    *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
+                                onclick: move |click_event| {
+                                    click_event.stop_propagation();
                                     context_menu::close_context_menu(cx, context_menu_active);
                                     context_menu_active.set(false);
+                                    *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
                                 },
                                 oncontextmenu: move |context_menu_event| {
                                     context_menu_event.stop_propagation();
