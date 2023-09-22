@@ -9,7 +9,7 @@
 -------------------
 
 File Explorer Emulator - made for my Operating Systems classes at the sixth semester of college.
-Made with pure Rust using the Dioxus framework.
+Made with Rust and the Dioxus framework.
 
 -- Keyboard Commands:
 
