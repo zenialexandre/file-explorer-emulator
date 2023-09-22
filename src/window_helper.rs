@@ -1,3 +1,4 @@
+use std::ops::Not;
 use dioxus::prelude::*;
 use dioxus_desktop::tao::window::Icon as TaoIcon;
 use image::GenericImageView;
@@ -114,5 +115,36 @@ pub(crate) fn open_file(selected_path: &str) {
 pub(crate) fn set_element_focus(main_element: &UseRef<Vec<Event<MountedData>>>) {
     if let Some(element) = main_element.read().last() {
         element.set_focus(true);
+    }
+}
+
+pub(crate) fn create_context_menu<'a>(context_menu_triggered: &'a UseState<bool>, context_menu_position_x: &'a UseState<f64>,
+                                      context_menu_position_y: &'a UseState<f64>, clicked_directory_id: &'a Mutex<usize>) -> LazyNodes<'a, 'a> {
+    println!("{}", context_menu_position_x);
+    println!("{}", context_menu_position_y);
+
+    if context_menu_triggered.get() == &true {
+        rsx!(
+            div {
+                class: "context-menu",
+                position: "fixed",
+                top: "{context_menu_position_y}",
+                left: "{context_menu_position_x}",
+                label { i { class: "material-icons", onclick: move |_| { }, "folder" }, "New" },
+                label { i { class: "material-icons", onclick: move |_| { }, "content_paste" }, "Paste" },
+
+                if (clicked_directory_id.lock().unwrap().to_string().eq("0")).not() {
+                    rsx!(
+                        label { i { class: "material-icons", onclick: move |_| { }, "content_copy" }, "Copy" },
+                        label { i { class: "material-icons" , onclick: move |_| { }, "content_cut" }, "Cut" },
+                        label { i { class: "material-icons" , onclick: move |_| { }, "signature"}, "Rename" },
+                        label { i { class: "material-icons", onclick: move |_| { }, "delete" }, "Delete" }
+                    )
+                }
+
+            },
+        )
+    } else {
+        rsx!( h1 {""} )
     }
 }

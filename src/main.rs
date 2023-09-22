@@ -48,6 +48,9 @@ fn main() {
 fn app(cx: Scope) -> Element {
     let main_element: &UseRef<Vec<Event<MountedData>>> = use_ref(cx, || Vec::new());
     let files: &UseRef<Files> = use_ref(cx, Files::new);
+    let context_menu_triggered: &UseState<bool> = use_state(cx, || false);
+    let context_menu_position_x: &UseState<f64> = use_state(cx, || 0.0);
+    let context_menu_position_y: &UseState<f64> = use_state(cx, || 0.0);
 
     cx.render(rsx! {
         div {
@@ -55,7 +58,10 @@ fn app(cx: Scope) -> Element {
             autofocus: "true",
             tabindex: "0",
             onmounted: move |element| { main_element.write().push(element); },
-            onclick: move |_| { window_helper::set_element_focus(main_element) },
+            onclick: move |_| {
+                window_helper::set_element_focus(main_element);
+                context_menu_triggered.set(false);
+            },
             onkeydown: move |keydown_event| {
                 if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
                     let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
@@ -64,6 +70,12 @@ fn app(cx: Scope) -> Element {
                 } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
                     copy_and_paste_operation::execute_paste_operation(files, &PREVIOUS_OPERATION_DONE);
                 }
+            },
+            oncontextmenu: move |context_menu_event| {
+                context_menu_event.stop_propagation();
+                context_menu_position_x.set(context_menu_event.client_coordinates().x);
+                context_menu_position_y.set(context_menu_event.client_coordinates().y);
+                context_menu_triggered.set(true);
             },
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
             style { include_str!("./assets/styles.css") }
@@ -76,6 +88,8 @@ fn app(cx: Scope) -> Element {
             },
             div {
                 main {
+                    window_helper::create_context_menu(context_menu_triggered, context_menu_position_x, context_menu_position_y,
+                        &CLICKED_DIRECTORY_ID)
                     files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
                         let mut path_end = path.split('\\').last().unwrap_or(path.as_str());
                         let icon_type: String = window_helper::get_icon_type(path.to_string());
@@ -128,7 +142,17 @@ fn app(cx: Scope) -> Element {
                                         Err(error) => panic!("{}", error)
                                     }
                                 },
-                                onclick: move |_| { *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id; },
+                                onclick: move |_| {
+                                    *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
+                                    context_menu_triggered.set(false);
+                                },
+                                oncontextmenu: move |context_menu_event| {
+                                    context_menu_event.stop_propagation();
+                                    *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
+                                    context_menu_position_x.set(context_menu_event.client_coordinates().x);
+                                    context_menu_position_y.set(context_menu_event.client_coordinates().y);
+                                    context_menu_triggered.set(true);
+                                },
                                 i { class: "material-icons", "{icon_type}" },
                                 h1 { "{path_end}" },
                                 p { class: "cooltip", "{_last_modification_date_formatted}" },
