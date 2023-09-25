@@ -40,7 +40,6 @@ pub(crate) fn close_context_menu_on_demand(cx: Scope) {
 
 #[inline_props]
 pub(crate) fn context_menu_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
-    //let context_menu_element: &UseRef<Vec<Event<MountedData>>> = use_ref(cx, || Vec::new());
     CONTEXT_MENU_ID.lock().unwrap().push(dioxus_desktop::use_window(cx).id());
 
     cx.render(rsx! {
@@ -75,12 +74,12 @@ pub(crate) fn context_menu_popup(cx: Scope, files_props: UseRef<Files>) -> Eleme
                             dioxus_desktop::use_window(cx).close();
                             cut_operation::execute_cut_operation(files_props, &CLICKED_DIRECTORY_ID);
                         }, label { i { class: "material-icons" , "content_cut" }, "Cut / Ctrl+X" } },
-                        div { class: "context-menu-item", label { i { class: "material-icons" , onclick: move |_| {
+                        div { class: "context-menu-item",  onclick: move |_| {
                             dioxus_desktop::use_window(cx).close();
                             let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
                                 create_rename_popupProps { files_props: files_props.clone(), title_props: "Rename" });
                             window_helper::create_new_dom_generic_window_state(cx.scope, rename_dom, "Rename");
-                        }, "edit" }, "Rename / Ctrl+R" } },
+                        }, label { i { class: "material-icons", "edit" }, "Rename / Ctrl+R" } },
                         div { class: "context-menu-item", onclick: move |_| {
                             dioxus_desktop::use_window(cx).close();
                             let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files_props.clone() });

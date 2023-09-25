@@ -27,6 +27,7 @@ extern crate lazy_static;
 lazy_static! { pub(crate) static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0); }
 lazy_static! { pub(crate) static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string()); }
 lazy_static! { pub(crate) static ref PREVIOUS_OPERATION_DONE: Mutex<String> = Mutex::new("".to_string()); }
+lazy_static! { static ref MAIN_ASSETS: Mutex<String> = Mutex::new("".to_string()); }
 
 const REGULAR_FILE: &str = "Regular File";
 
@@ -54,6 +55,8 @@ fn app(cx: Scope) -> Element {
     let main_element: &UseRef<Vec<Event<MountedData>>> = use_ref(cx, || Vec::new());
     let files: &UseRef<Files> = use_ref(cx, Files::new);
     let context_menu_active: &UseState<bool> = use_state(cx, || false);
+    let is_table_layout_triggered: &UseState<bool> = use_state(cx, || false);
+    *MAIN_ASSETS.lock().unwrap() = "padding: 10px 50px;".to_string();
 
     cx.render(rsx! {
         div {
@@ -62,29 +65,14 @@ fn app(cx: Scope) -> Element {
             tabindex: "0",
             onmounted: move |element| { main_element.write().push(element); },
             onclick: move |click_event| {
-                click_event.stop_propagation();
-                context_menu::close_context_menu(cx, context_menu_active);
+                handle_click_event(cx, click_event, context_menu_active);
                 window_helper::set_element_focus(main_element);
-                context_menu_active.set(false);
             },
             onkeydown: move |keydown_event| {
-                if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
-                    let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
-                        create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
-                    window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
-                } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
-                    copy_and_paste_operation::execute_paste_operation(files, &PREVIOUS_OPERATION_DONE);
-                }
+                handle_general_keyboard_events(cx, files, keydown_event, is_table_layout_triggered);
             },
             oncontextmenu: move |context_menu_event| {
-                context_menu_event.stop_propagation();
-                context_menu::close_context_menu_on_demand(cx);
-                context_menu_active.set(true);
-                *IS_CONTEXT_ON_ITEM.lock().unwrap() = false;
-
-                let context_menu_dom: VirtualDom = VirtualDom::new_with_props(context_menu_popup,
-                    context_menu_popupProps { files_props: files.clone() });
-                context_menu::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
+                handle_context_menu_event(cx, files, context_menu_event, context_menu_active);
             },
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
             style { include_str!("./assets/styles.css") }
@@ -100,6 +88,7 @@ fn app(cx: Scope) -> Element {
             },
             div {
                 main {
+                    style: "{MAIN_ASSETS.lock().unwrap()}",
                     files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
                         let mut path_end = path.split('\\').last().unwrap_or(path.as_str());
                         let icon_type: String = window_helper::get_icon_type(path.to_string());
@@ -125,57 +114,20 @@ fn app(cx: Scope) -> Element {
                                 key: "{path}",
                                 tabindex: "0",
                                 onkeydown: move |keydown_event| {
-                                    if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
-                                        let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
-                                            create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
-                                        window_helper::create_new_dom_generic_window(cx, rename_dom, "Rename");
-                                    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
-                                        let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
-                                        window_helper::create_new_dom_generic_window(cx, delete_dom, "Delete");
-                                    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyC {
-                                        copy_and_paste_operation::execute_copy_operation(files, &CLICKED_DIRECTORY_ID);
-                                    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyX {
-                                        cut_operation::execute_cut_operation(files, &CLICKED_DIRECTORY_ID);
-                                    }
+                                    handle_main_keyboard_events(cx, files, keydown_event);
                                 },
                                 ondblclick: move |_| {
-                                    let selected_full_path = window_helper::get_selected_full_path(files, &CLICKED_DIRECTORY_ID);
-                                    match std::fs::metadata(selected_full_path.clone()) {
-                                        Ok(path_metadata) => {
-                                            if path_metadata.is_file() {
-                                                window_helper::open_file(selected_full_path.clone().as_str());
-                                            } else if path_metadata.is_dir() {
-                                                files.write().enter_directory(directory_id);
-                                                window_helper::set_element_focus(main_element);
-                                            }
-                                        },
-                                        Err(error) => panic!("{}", error)
-                                    }
+                                    handle_double_click_event(files, directory_id, main_element);
                                 },
                                 onclick: move |click_event| {
-                                    click_event.stop_propagation();
-                                    context_menu::close_context_menu(cx, context_menu_active);
-                                    context_menu_active.set(false);
+                                    handle_click_event(cx, click_event, context_menu_active);
                                     *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
                                 },
                                 oncontextmenu: move |context_menu_event| {
-                                    context_menu_event.stop_propagation();
-                                    context_menu::close_context_menu_on_demand(cx);
-                                    context_menu_active.set(true);
+                                    handle_context_menu_event(cx, files, context_menu_event, context_menu_active);
                                     *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
-                                    *IS_CONTEXT_ON_ITEM.lock().unwrap() = true;
-
-                                    let context_menu_dom: VirtualDom = VirtualDom::new_with_props(context_menu_popup,
-                                        context_menu_popupProps { files_props: files.clone() });
-                                    context_menu::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
                                 },
-                                i { class: "material-icons", "{icon_type}" },
-                                h1 { "{path_end}" },
-                                p { class: "cooltip", "{_last_modification_date_formatted}" },
-                                p { class: "cooltip", "{file_type}" },
-                                if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
-                                    rsx!( p { class: "cooltip", "{file_size} KB" } )
-                                }
+                                set_layout_option(is_table_layout_triggered.get(), icon_type, path_end.to_string(), path.to_string(), _last_modification_date_formatted, file_type, file_size)
                             }
                         )
                     }),
@@ -191,6 +143,159 @@ fn app(cx: Scope) -> Element {
             }
         }
     })
+}
+
+fn set_layout_option(is_table_layout_triggered: &bool, icon_type: String, path_end: String, path: String,
+                     _last_modification_date_formatted: String, file_type: String, file_size: u64) -> LazyNodes {
+    if is_table_layout_triggered == &true {
+        activate_table_layout(icon_type, path_end, path, _last_modification_date_formatted, file_type, file_size)
+    } else {
+        activate_images_layout(icon_type, path_end, path, _last_modification_date_formatted, file_type, file_size)
+    }
+}
+
+fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, _last_modification_date_formatted: String,
+                         file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
+    *MAIN_ASSETS.lock().unwrap() = r"
+        padding: 10px 50px;
+        display: flex;
+        flex-direction: column;
+        outline: none;
+    ".to_string();
+
+    let table_assets = r"
+        padding: 0;
+        display: inline-table;
+        border-collapse: collapse;
+        border-spacing: 0px;
+        border: 0px solid #ccc;
+        margin-top: 20px;
+        cellspacing: 0px;
+    ";
+
+    let i_assets = r"
+        text-align: left;
+        padding: auto;
+        font-size: 20px;
+        color: #607D8B;
+    ";
+
+    let h1_assets = r"
+        top: -7px;
+        font-size: 15px;
+        width: 250px;
+        font-weight: 4px;
+        text-align: left;
+        padding-left: 50px;
+        color: black;
+    ";
+
+    rsx!(
+        table {
+            style: "{table_assets}",
+            tbody {
+                td { i { style: "{i_assets}", class: "material-icons", "{icon_type}" } },
+                td { h1 { style: "{h1_assets}", "{path_end}" } },
+                td { h1 { style: "{h1_assets}", "{_last_modification_date_formatted}" } },
+                td { h1 { style: "{h1_assets}", "{file_type}" } },
+                if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
+                    rsx!( td { h1 { style: "{h1_assets}", "{file_size} KB" } } )
+                } else {
+                    rsx!( td { h1 { style: "{h1_assets}", " " } } )
+                }
+            }
+        }
+    )
+}
+
+fn activate_images_layout<'a>(icon_type: String, path_end: String, path: String, _last_modification_date_formatted: String,
+                          file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
+    let i_assets = r"
+        margin: 0;
+        font-size: 80px;
+        color: #607D8B;
+    ";
+
+    let h1_assets = r"
+        position: relative;
+        display: block;
+        top: -5px;
+        font-size: 13px;
+        font-weight: 12px;
+        text-align: center;
+        padding-right: -7px;
+    ";
+
+    rsx!(
+        i { style: "{i_assets}", class: "material-icons", "{icon_type}" },
+        h1 { style: "{h1_assets}", "{path_end}" },
+        p { class: "cooltip", "{_last_modification_date_formatted}" },
+        p { class: "cooltip", "{file_type}" },
+        if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
+            rsx!( p { class: "cooltip", "{file_size} KB" } )
+        }
+    )
+}
+
+fn handle_general_keyboard_events(cx: Scope, files: &UseRef<Files>, keydown_event: Event<KeyboardData>, is_table_layout_triggered: &UseState<bool>) {
+    if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
+        let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
+            create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
+        window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
+        copy_and_paste_operation::execute_paste_operation(files, &PREVIOUS_OPERATION_DONE);
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::ArrowUp {
+        is_table_layout_triggered.set(false);
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::ArrowDown {
+        is_table_layout_triggered.set(true);
+    }
+}
+
+fn handle_main_keyboard_events(cx: Scope, files: &UseRef<Files>, keydown_event: Event<KeyboardData>) {
+    if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
+        let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
+            create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
+        window_helper::create_new_dom_generic_window(cx, rename_dom, "Rename");
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
+        let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
+        window_helper::create_new_dom_generic_window(cx, delete_dom, "Delete");
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyC {
+        copy_and_paste_operation::execute_copy_operation(files, &CLICKED_DIRECTORY_ID);
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyX {
+        cut_operation::execute_cut_operation(files, &CLICKED_DIRECTORY_ID);
+    }
+}
+
+fn handle_double_click_event(files: &UseRef<Files>, directory_id: usize, main_element: &UseRef<Vec<Event<MountedData>>>) {
+    let selected_full_path = window_helper::get_selected_full_path(files, &CLICKED_DIRECTORY_ID);
+    match std::fs::metadata(selected_full_path.clone()) {
+        Ok(path_metadata) => {
+            if path_metadata.is_file() {
+                window_helper::open_file(selected_full_path.clone().as_str());
+            } else if path_metadata.is_dir() {
+                files.write().enter_directory(directory_id);
+                window_helper::set_element_focus(main_element);
+            }
+        },
+        Err(error) => panic!("{}", error)
+    }
+}
+
+fn handle_click_event(cx: Scope, click_event: Event<MouseData>, context_menu_active: &UseState<bool>) {
+    click_event.stop_propagation();
+    context_menu::close_context_menu(cx, context_menu_active);
+    context_menu_active.set(false);
+}
+
+fn handle_context_menu_event(cx: Scope, files: &UseRef<Files>, context_menu_event: Event<MouseData>, context_menu_active: &UseState<bool>) {
+    context_menu_event.stop_propagation();
+    context_menu::close_context_menu_on_demand(cx);
+    context_menu_active.set(true);
+    *IS_CONTEXT_ON_ITEM.lock().unwrap() = true;
+
+    let context_menu_dom: VirtualDom = VirtualDom::new_with_props(context_menu_popup,
+                                                                  context_menu_popupProps { files_props: files.clone() });
+    context_menu::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
 }
 
 impl Files {
