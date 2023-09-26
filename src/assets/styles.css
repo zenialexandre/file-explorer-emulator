@@ -128,7 +128,11 @@ header {
 }
 
 header h1 {
-    font-weight: 400;
+    font-weight: 3px;
+    font-size: 20px;
+    padding: 5px;
+    border: 1px solid white;
+    border-radius: 5px;
 }
 
 header span {

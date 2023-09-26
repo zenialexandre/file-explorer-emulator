@@ -43,7 +43,7 @@ fn main() {
         app,
         Config::default().with_disable_context_menu(true).with_window(WindowBuilder::new()
             .with_resizable(true).with_title("File Explorer Emulator")
-            .with_inner_size(LogicalSize::new(800.0, 600.0))
+            .with_inner_size(LogicalSize::new(900.0, 700.0))
             .with_position(LogicalPosition::new(100, 50))
             .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
             .with_focused(true)
@@ -63,7 +63,9 @@ fn app(cx: Scope) -> Element {
             id: "main-div",
             autofocus: "true",
             tabindex: "0",
-            onmounted: move |element| { main_element.write().push(element); },
+            onmounted: move |element| {
+                main_element.write().push(element);
+            },
             onclick: move |click_event| {
                 handle_click_event(cx, click_event, context_menu_active);
                 window_helper::set_element_focus(main_element);
@@ -73,6 +75,7 @@ fn app(cx: Scope) -> Element {
             },
             oncontextmenu: move |context_menu_event| {
                 handle_context_menu_event(cx, files, context_menu_event, context_menu_active);
+                *IS_CONTEXT_ON_ITEM.lock().unwrap() = false;
             },
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
             style { include_str!("./assets/styles.css") }
@@ -126,8 +129,10 @@ fn app(cx: Scope) -> Element {
                                 oncontextmenu: move |context_menu_event| {
                                     handle_context_menu_event(cx, files, context_menu_event, context_menu_active);
                                     *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
+                                    *IS_CONTEXT_ON_ITEM.lock().unwrap() = true;
                                 },
-                                set_layout_option(is_table_layout_triggered.get(), icon_type, path_end.to_string(), path.to_string(), _last_modification_date_formatted, file_type, file_size)
+                                set_layout_option(is_table_layout_triggered.get(), icon_type, path_end.to_string(),
+                                    path.to_string(), _last_modification_date_formatted, file_type, file_size)
                             }
                         )
                     }),
@@ -155,7 +160,7 @@ fn set_layout_option(is_table_layout_triggered: &bool, icon_type: String, path_e
 }
 
 fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, _last_modification_date_formatted: String,
-                         file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
+                            file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
     *MAIN_ASSETS.lock().unwrap() = r"
         padding: 10px 50px;
         display: flex;
@@ -164,18 +169,19 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
     ".to_string();
 
     let table_assets = r"
-        padding: 0;
-        display: inline-table;
-        border-collapse: collapse;
-        border-spacing: 0px;
-        border: 0px solid #ccc;
+        height: auto;
+        width: auto;
+        padding: 0px;
+        border-collapse: separate;
+        border-spacing: 1px;
+        border: 1px solid gray;
+        border-radius: 5px;
         margin-top: 20px;
-        cellspacing: 0px;
+        line-height: 1;
     ";
 
     let i_assets = r"
         text-align: left;
-        padding: auto;
         font-size: 20px;
         color: #607D8B;
     ";
@@ -183,7 +189,7 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
     let h1_assets = r"
         top: -7px;
         font-size: 15px;
-        width: 250px;
+        width: 200px;
         font-weight: 4px;
         text-align: left;
         padding-left: 50px;
@@ -194,14 +200,14 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
         table {
             style: "{table_assets}",
             tbody {
-                td { i { style: "{i_assets}", class: "material-icons", "{icon_type}" } },
-                td { h1 { style: "{h1_assets}", "{path_end}" } },
-                td { h1 { style: "{h1_assets}", "{_last_modification_date_formatted}" } },
-                td { h1 { style: "{h1_assets}", "{file_type}" } },
-                if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
-                    rsx!( td { h1 { style: "{h1_assets}", "{file_size} KB" } } )
-                } else {
-                    rsx!( td { h1 { style: "{h1_assets}", " " } } )
+                tr {
+                    td { i { style: "{i_assets}", class: "material-icons", "{icon_type}" } },
+                    td { h1 { style: "{h1_assets}", "{path_end}" } },
+                    td { h1 { style: "{h1_assets}", "{_last_modification_date_formatted}" } },
+                    td { h1 { style: "{h1_assets}", "{file_type}" } },
+                    if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
+                        rsx!( td { h1 { style: "{h1_assets}", "{file_size} KB" } } )
+                    }
                 }
             }
         }
@@ -291,7 +297,6 @@ fn handle_context_menu_event(cx: Scope, files: &UseRef<Files>, context_menu_even
     context_menu_event.stop_propagation();
     context_menu::close_context_menu_on_demand(cx);
     context_menu_active.set(true);
-    *IS_CONTEXT_ON_ITEM.lock().unwrap() = true;
 
     let context_menu_dom: VirtualDom = VirtualDom::new_with_props(context_menu_popup,
                                                                   context_menu_popupProps { files_props: files.clone() });
