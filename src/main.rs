@@ -28,6 +28,7 @@ lazy_static! { pub(crate) static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex:
 lazy_static! { pub(crate) static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string()); }
 lazy_static! { pub(crate) static ref PREVIOUS_OPERATION_DONE: Mutex<String> = Mutex::new("".to_string()); }
 lazy_static! { static ref MAIN_ASSETS: Mutex<String> = Mutex::new("".to_string()); }
+lazy_static! { static ref FOLDER_ASSETS: Mutex<String> = Mutex::new("".to_string()); }
 
 const REGULAR_FILE: &str = "Regular File";
 
@@ -57,6 +58,17 @@ fn app(cx: Scope) -> Element {
     let context_menu_active: &UseState<bool> = use_state(cx, || false);
     let is_table_layout_triggered: &UseState<bool> = use_state(cx, || false);
     *MAIN_ASSETS.lock().unwrap() = "padding: 10px 50px;".to_string();
+    *FOLDER_ASSETS.lock().unwrap() = r"
+        float: left;
+        width: 100px;
+        height: 152px;
+        /* //padding: 20px; */
+        margin-right: 50px;
+        margin-bottom: 70px;
+        border-radius: 2px;
+        /* //overflow: hidden; */
+        cursor: pointer;
+    ".to_string();
 
     cx.render(rsx! {
         div {
@@ -93,17 +105,13 @@ fn app(cx: Scope) -> Element {
                 main {
                     style: "{MAIN_ASSETS.lock().unwrap()}",
                     files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
-                        let mut path_end = path.split('\\').last().unwrap_or(path.as_str());
+                        let path_end = path.split('\\').last().unwrap_or(path.as_str());
                         let icon_type: String = window_helper::get_icon_type(path.to_string());
                         let file_type: String = window_helper::get_file_type_formatted(path.to_string());
                         let path_metadata = std::fs::metadata(path.to_string());
                         let file_size: u64 = window_helper::get_file_size(path.to_string());
                         let mut last_modification_date_utc: DateTime<Utc> = Default::default();
                         let mut _last_modification_date_formatted: String = String::new();
-
-                        if path_end.len() > 40 {
-                            (path_end, _) = path_end.split_at(40);
-                        }
 
                         if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
                             last_modification_date_utc = path_metadata.into();
@@ -114,6 +122,7 @@ fn app(cx: Scope) -> Element {
                         rsx! (
                             div {
                                 class: "folder",
+                                style: "{FOLDER_ASSETS.lock().unwrap()}",
                                 key: "{path}",
                                 tabindex: "0",
                                 onkeydown: move |keydown_event| {
@@ -160,20 +169,33 @@ fn set_layout_option(is_table_layout_triggered: &bool, icon_type: String, path_e
 }
 
 fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, _last_modification_date_formatted: String,
-                            file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
+                             file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
     *MAIN_ASSETS.lock().unwrap() = r"
         padding: 10px 50px;
         display: flex;
         flex-direction: column;
         outline: none;
+        height: 0px;
+    ".to_string();
+
+    *FOLDER_ASSETS.lock().unwrap() = r"
+        float: left;
+        width: 100px;
+        height: 0px;
+        /* //padding: 20px; */
+        margin-right: 50px;
+        margin-bottom: 70px;
+        border-radius: 2px;
+        /* //overflow: hidden; */
+        cursor: pointer;
     ".to_string();
 
     let table_assets = r"
         height: auto;
         width: auto;
-        padding: 0px;
+        padding: 2px;
         border-collapse: separate;
-        border-spacing: 1px;
+        border-spacing: 2px;
         border: 1px solid gray;
         border-radius: 5px;
         margin-top: 20px;
@@ -189,11 +211,12 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
     let h1_assets = r"
         top: -7px;
         font-size: 15px;
-        width: 200px;
+        width: 250px;
         font-weight: 4px;
         text-align: left;
         padding-left: 50px;
         color: black;
+        word-wrap: break-word;
     ";
 
     rsx!(
@@ -215,7 +238,7 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
 }
 
 fn activate_images_layout<'a>(icon_type: String, path_end: String, path: String, _last_modification_date_formatted: String,
-                          file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
+                              file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
     let i_assets = r"
         margin: 0;
         font-size: 80px;
@@ -230,6 +253,7 @@ fn activate_images_layout<'a>(icon_type: String, path_end: String, path: String,
         font-weight: 12px;
         text-align: center;
         padding-right: -7px;
+        word-wrap: break-word;
     ";
 
     rsx!(

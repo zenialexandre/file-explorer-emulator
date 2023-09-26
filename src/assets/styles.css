@@ -11,18 +11,6 @@ body {
     padding-top: 77px;
 }
 
-.folder {
-    float: left;
-    width: 100px;
-    height: 152px;
-    /* //padding: 20px; */
-    margin-right: 50px;
-    margin-bottom: 70px;
-    border-radius: 2px;
-    /* //overflow: hidden; */
-    cursor: pointer;
-}
-
 .folder:hover i {
     background-color: #bfbfbf;
     opacity: 0.5;
