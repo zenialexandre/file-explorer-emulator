@@ -24,3 +24,7 @@ Ctrl + C = Copy
 Ctrl + V = Paste
 
 Ctrl + X = Cut
+
+Ctrl + ArrowUp = Images Layout
+
+Ctrl + ArrowDown = Table Layout
