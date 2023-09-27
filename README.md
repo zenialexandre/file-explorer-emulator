@@ -1,4 +1,4 @@
-# file-explorer-emulator
+# <h1> file-explorer-emulator </h1>
 
 ![cool_circle](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4aea6276-9e97-445d-9c5c-8476d280e143)
 
@@ -25,6 +25,6 @@ Ctrl + V = Paste
 
 Ctrl + X = Cut
 
-Ctrl + ArrowUp = Images Layout
+Ctrl + Equal = Images Layout
 
-Ctrl + ArrowDown = Table Layout
+Ctrl + Minus = Table Layout
