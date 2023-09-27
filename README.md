@@ -1,10 +1,11 @@
-# <h1> file-explorer-emulator </h1>
-
-![cool_circle](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4aea6276-9e97-445d-9c5c-8476d280e143)
+# ![cool_circle](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4aea6276-9e97-445d-9c5c-8476d280e143) <h1> file-explorer-emulator </h1>
 
 -------------------
-
+<h1>Images Layout:</h1>
 ![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/05a4e99d-b511-4167-982c-397de849588d)
+
+<h1>Table Layout:</h1>
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/2d01239c-eba9-44ba-8953-32612656d98b)
 
 -------------------
 
