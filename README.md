@@ -1,4 +1,4 @@
-# <h1> <i> ![cool_circle](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4aea6276-9e97-445d-9c5c-8476d280e143) </i> file-explorer-emulator </h1>
+# <h1> ![cool_circle](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4aea6276-9e97-445d-9c5c-8476d280e143) file-explorer-emulator </h1>
 
 -------------------
 <h1>Images Layout:</h1>
