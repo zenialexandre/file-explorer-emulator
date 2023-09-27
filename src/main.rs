@@ -89,13 +89,18 @@ fn app(cx: Scope) -> Element {
                 handle_context_menu_event(cx, files, context_menu_event, context_menu_active);
                 *IS_CONTEXT_ON_ITEM.lock().unwrap() = false;
             },
-            link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
+            link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel: "stylesheet", }
+            link { href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined", rel: "stylesheet", }
             style { include_str!("./assets/styles.css") }
             header {
                 i { class: "material-icons", onclick: move |_| files.write().walk_to_last_directory(), "arrow_back" }
                 i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
                 h1 { files.read().current() }
                 span { }
+                i { class: "material-symbols-outlined", onclick: move |_| {
+                    context_menu::close_context_menu_on_demand(cx);
+                    // TODO
+                }, "search" }
                 i { class: "material-icons", onclick: move |_| {
                     dioxus_desktop::use_window(cx).close();
                     context_menu::close_context_menu_on_demand(cx);
