@@ -274,9 +274,9 @@ fn handle_general_keyboard_events(cx: Scope, files: &UseRef<Files>, keydown_even
         window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
     } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
         copy_and_paste_operation::execute_paste_operation(files, &PREVIOUS_OPERATION_DONE);
-    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::ArrowUp {
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::Equal {
         is_table_layout_triggered.set(false);
-    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::ArrowDown {
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::Minus {
         is_table_layout_triggered.set(true);
     }
 }
