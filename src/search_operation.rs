@@ -1,8 +1,9 @@
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::prelude::*;
-use crate::Files;
+use crate::{Files, window_helper};
 
-pub(crate) fn create_search_input_field(cx: Scope, files: &UseRef<Files>, is_search_field_enabled: &UseState<bool>) -> LazyNodes {
+pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRef<Files>,
+                                            is_search_field_enabled: &'a UseState<bool>) -> LazyNodes<'a, 'a> {
     if is_search_field_enabled.get() == &true {
         let search_field_assets = r"
             text-align: left;
@@ -22,13 +23,13 @@ pub(crate) fn create_search_input_field(cx: Scope, files: &UseRef<Files>, is_sea
                 style: "{search_field_assets}",
                 autofocus: "true",
                 r#type: "text",
-                placeholder: "Type the path/or archive name...",
+                placeholder: "Search inside the current stack...",
                 oninput: |type_event| {
                     search_value.set(type_event.value.to_string());
                 },
                 onkeydown: |keydown_event| {
                     if keydown_event.inner().code() == Code::Enter {
-                        execute_search_operation(files, search_value);
+                        execute_search_operation(cx, files, search_value);
                     }
                 }
             },
@@ -40,6 +41,64 @@ pub(crate) fn create_search_input_field(cx: Scope, files: &UseRef<Files>, is_sea
     }
 }
 
-fn execute_search_operation(files: &UseRef<Files>, is_search_field_enabled: &UseState<String>) {
+fn execute_search_operation(cx: &ScopeState, files: &UseRef<Files>, search_value: &UseState<String>) {
+    if search_value.get().to_string().trim().is_empty() {
+        files.write().path_stack.clear();
+        files.write().path_names.clear();
+        files.write().path_stack.push("C://".to_string());
+        files.write().reload_path_list();
+    } else {
+        let search_results_dom: VirtualDom = VirtualDom::new_with_props(search_results_popup,
+        search_results_popupProps { files_props: files.clone(), search_value_props: search_value.clone() });
+        window_helper::create_new_dom_generic_window_state(cx, search_results_dom, "Search");
+    }
+}
 
+#[inline_props]
+pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search_value_props: UseState<String>) -> Element {
+    let search_results: &UseRef<Vec<String>> = use_ref(cx, || Vec::new());
+
+    cx.render(rsx!(
+        div {
+            link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel: "stylesheet", }
+            link { href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined", rel: "stylesheet", }
+            style { include_str!("./assets/search_popup.css") }
+            header {
+                span { }
+                i { class: "material-icons", onclick: move |_| {
+                    dioxus_desktop::use_window(cx).close();
+                }, "cancel" }
+            },
+            div {
+                main {
+                    search_results.read().iter().map(|path| {
+                        rsx!(
+                            table {
+                                tbody {
+                                    tr {
+                                        class: "folder",
+                                        tabindex: "0",
+                                        ondblclick: move |_| {
+                                            println!("{}", path.to_string());
+                                        },
+                                        td { h1 { "{path}" } }
+                                    }
+                                }
+                            }
+                        )
+                    })
+                    if search_results.read().len() > 0 {
+                        rsx!(
+                            div {""}
+                        )
+                    } else {
+                        rsx!(
+                            i { class: "material-symbols-outlined", {}, "mood_bad" }
+                            p { "No results found." }
+                        )
+                    }
+                }
+            }
+        }
+    ))
 }

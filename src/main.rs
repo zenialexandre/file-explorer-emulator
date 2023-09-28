@@ -99,7 +99,7 @@ fn app(cx: Scope) -> Element {
                 i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
                 h1 { files.read().current() }
                 span { }
-                search_operation::create_search_input_field(cx, files.clone(), is_search_field_enabled)
+                search_operation::create_search_input_field(cx, files, is_search_field_enabled)
                 i { class: "material-symbols-outlined", onclick: move |_| {
                     context_menu::close_context_menu_on_demand(cx);
                     if is_search_field_enabled == &true {
