@@ -43,6 +43,10 @@ table {
     line-height: 1;
 }
 
+tr {
+    height: 2px;
+}
+
 h1 {
     position: relative;
     display: block;

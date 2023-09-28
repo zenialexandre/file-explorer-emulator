@@ -1,6 +1,8 @@
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::prelude::*;
-use crate::{Files, window_helper};
+
+use crate::Files;
+use crate::window_helper;
 
 pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRef<Files>,
                                             is_search_field_enabled: &'a UseState<bool>) -> LazyNodes<'a, 'a> {
@@ -56,7 +58,9 @@ fn execute_search_operation(cx: &ScopeState, files: &UseRef<Files>, search_value
 
 #[inline_props]
 pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search_value_props: UseState<String>) -> Element {
-    let search_results: &UseRef<Vec<String>> = use_ref(cx, || Vec::new());
+    let search_results = use_ref(cx,  || Vec::new());
+
+    search_results.write().push(search_value_props.get().to_string());
 
     cx.render(rsx!(
         div {
@@ -71,31 +75,25 @@ pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search
             },
             div {
                 main {
-                    search_results.read().iter().map(|path| {
-                        rsx!(
-                            table {
-                                tbody {
+                    table {
+                        tbody {
+                            // TODO -> This loop is not ready-to-use
+                            /*search_results.read().iter().take(search_results.read().len()).map(|path| {
+                                let path_borrowed = path.to_string();
+                                println!("entrou");
+
+                                rsx!(
                                     tr {
                                         class: "folder",
                                         tabindex: "0",
                                         ondblclick: move |_| {
-                                            println!("{}", path.to_string());
+                                            println!("{}", path_borrowed);
                                         },
-                                        td { h1 { "{path}" } }
+                                        td { h1 { "{path_borrowed}" } }
                                     }
-                                }
-                            }
-                        )
-                    })
-                    if search_results.read().len() > 0 {
-                        rsx!(
-                            div {""}
-                        )
-                    } else {
-                        rsx!(
-                            i { class: "material-symbols-outlined", {}, "mood_bad" }
-                            p { "No results found." }
-                        )
+                                )
+                            })*/
+                        }
                     }
                 }
             }
