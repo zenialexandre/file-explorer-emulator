@@ -59,7 +59,9 @@ pub(crate) fn conflict_popup(cx: Scope, files_props: UseRef<Files>, enable_file_
                             r#type: "text",
                             placeholder: "Directory/File new name",
                             id: "directory-file-name",
-                            oninput: |input_event| { *NEW_FILE_OR_DIR_NAME.lock().unwrap() = input_event.value.to_string() }
+                            oninput: |type_event| {
+                                *NEW_FILE_OR_DIR_NAME.lock().unwrap() = type_event.value.to_string()
+                            }
                         },
                         br {},
                         i {

@@ -6,6 +6,7 @@ mod copy_and_paste_operation;
 mod conflict_process;
 mod cut_operation;
 mod context_menu;
+mod search_operation;
 
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
@@ -56,6 +57,7 @@ fn app(cx: Scope) -> Element {
     let main_element: &UseRef<Vec<Event<MountedData>>> = use_ref(cx, || Vec::new());
     let files: &UseRef<Files> = use_ref(cx, Files::new);
     let context_menu_active: &UseState<bool> = use_state(cx, || false);
+    let is_search_field_enabled: &UseState<bool> = use_state(cx, || false);
     let is_table_layout_triggered: &UseState<bool> = use_state(cx, || false);
     *MAIN_ASSETS.lock().unwrap() = "padding: 10px 50px;".to_string();
     *FOLDER_ASSETS.lock().unwrap() = r"
@@ -97,9 +99,14 @@ fn app(cx: Scope) -> Element {
                 i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
                 h1 { files.read().current() }
                 span { }
+                search_operation::create_search_input_field(cx, files.clone(), is_search_field_enabled)
                 i { class: "material-symbols-outlined", onclick: move |_| {
                     context_menu::close_context_menu_on_demand(cx);
-                    // TODO
+                    if is_search_field_enabled == &true {
+                        is_search_field_enabled.set(false);
+                    } else {
+                        is_search_field_enabled.set(true);
+                    }
                 }, "search" }
                 i { class: "material-icons", onclick: move |_| {
                     dioxus_desktop::use_window(cx).close();
