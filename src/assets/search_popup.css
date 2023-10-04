@@ -33,7 +33,7 @@ main {
 
 table {
     height: auto;
-    width: auto;
+    width: 1000px;
     padding: 2px;
     border-collapse: separate;
     border-spacing: 2px;

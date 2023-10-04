@@ -1,5 +1,9 @@
+use std::collections::HashMap;
+use std::string::ToString;
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::prelude::*;
+//use regex::Regex;
+use walkdir::WalkDir;
 
 use crate::Files;
 use crate::window_helper;
@@ -31,7 +35,7 @@ pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRe
                 },
                 onkeydown: |keydown_event| {
                     if keydown_event.inner().code() == Code::Enter {
-                        execute_search_operation(cx, files, search_value);
+                        execute_search_operation(cx, files, search_value.to_string().trim().to_string());
                     }
                 }
             },
@@ -43,25 +47,45 @@ pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRe
     }
 }
 
-fn execute_search_operation(cx: &ScopeState, files: &UseRef<Files>, search_value: &UseState<String>) {
-    if search_value.get().to_string().trim().is_empty() {
+fn execute_search_operation(cx: &ScopeState, files: &UseRef<Files>, search_value: String) {
+    if search_value.is_empty() {
         files.write().path_stack.clear();
         files.write().path_names.clear();
         files.write().path_stack.push("C://".to_string());
         files.write().reload_path_list();
     } else {
-        let search_results_dom: VirtualDom = VirtualDom::new_with_props(search_results_popup,
-        search_results_popupProps { files_props: files.clone(), search_value_props: search_value.clone() });
-        window_helper::create_new_dom_generic_window_state(cx, search_results_dom, "Search");
+        let search_results_map = use_ref(cx,  || HashMap::new());
+        search_results_map.write().clear();
+        search(files.clone(), search_results_map.clone(), search_value.clone());
+        create_search_popup(cx, files.clone(), search_results_map.clone());
     }
 }
 
+fn search(files: UseRef<Files>, search_results_map: UseRef<HashMap<usize, String>>, search_value: String) {
+    //let search_regex_pattern = search_value_props.chars().map(|char| format!(".*{}.*", char)).collect::<String>();
+    //let search_regex = Regex::new(search_value_props.as_str()).unwrap();
+    let mut iteration_counter = 1;
+
+    for path_name in files.read().path_names.iter() {
+        for entry in WalkDir::new(path_name).into_iter().filter_map(|entry_mapped| entry_mapped.ok()) {
+            let name = entry.file_name().to_string_lossy().to_string();
+            let path_name = entry.path().to_string_lossy().to_string();
+            if name.contains(search_value.as_str()) {
+                search_results_map.write().insert(iteration_counter, path_name);
+            }
+            iteration_counter += 1;
+        }
+    }
+}
+
+fn create_search_popup(cx: &ScopeState, files: UseRef<Files>, search_results_map: UseRef<HashMap<usize, String>>) {
+    let search_results_dom: VirtualDom = VirtualDom::new_with_props(search_results_popup,
+                                                                    search_results_popupProps { files_props: files.clone(), search_result_map_props: search_results_map.clone() });
+    window_helper::create_new_dom_generic_window_state(cx, search_results_dom, "Search");
+}
+
 #[inline_props]
-pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search_value_props: UseState<String>) -> Element {
-    let search_results = use_ref(cx,  || Vec::new());
-
-    search_results.write().push(search_value_props.get().to_string());
-
+pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search_result_map_props: UseRef<HashMap<usize, String>>) -> Element {
     cx.render(rsx!(
         div {
             link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel: "stylesheet", }
@@ -77,10 +101,8 @@ pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search
                 main {
                     table {
                         tbody {
-                            // TODO -> This loop is not ready-to-use
-                            /*search_results.read().iter().take(search_results.read().len()).map(|path| {
-                                let path_borrowed = path.to_string();
-                                println!("entrou");
+                            search_result_map_props.read().iter().map(|searched_object| {
+                                let path_borrowed = searched_object.1.to_string();
 
                                 rsx!(
                                     tr {
@@ -92,7 +114,7 @@ pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search
                                         td { h1 { "{path_borrowed}" } }
                                     }
                                 )
-                            })*/
+                            })
                         }
                     }
                 }
@@ -100,3 +122,4 @@ pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search
         }
     ))
 }
+

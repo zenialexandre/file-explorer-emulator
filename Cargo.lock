@@ -1310,6 +1310,8 @@ dependencies = [
  "image",
  "lazy_static",
  "opener",
+ "regex",
+ "walkdir",
 ]
 
 [[package]]
