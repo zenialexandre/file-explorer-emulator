@@ -4,7 +4,6 @@ use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
 use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
-//use regex::Regex;
 use walkdir::WalkDir;
 
 use crate::Files;
@@ -12,6 +11,8 @@ use crate::window_helper;
 
 pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRef<Files>,
                                             is_search_field_enabled: &'a UseState<bool>) -> LazyNodes<'a, 'a> {
+    let search_value: &UseState<String> = use_state(cx, || String::new());
+
     if is_search_field_enabled.get() == &true {
         let search_field_assets = r"
             text-align: left;
@@ -23,7 +24,6 @@ pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRe
             height: 18px;
             padding-left: 3px;
         ";
-        let search_value: &UseState<String> = use_state(cx, || String::new());
 
         rsx!(
             input {
@@ -113,7 +113,8 @@ pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search
     ))
 }
 
-fn create_search_results_table<'a>(cx: &'a ScopeState, files_props: &'a UseRef<Files>, search_results_map_props: UseRef<HashMap<usize, String>>) -> LazyNodes<'a, 'a> {
+fn create_search_results_table<'a>(cx: &'a ScopeState, files_props: &'a UseRef<Files>,
+                                   search_results_map_props: UseRef<HashMap<usize, String>>) -> LazyNodes<'a, 'a> {
     if search_results_map_props.read().is_empty() {
         rsx!(
             i { class: "material-symbols-outlined", {}, "sentiment_dissatisfied" }

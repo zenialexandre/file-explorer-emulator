@@ -11,6 +11,55 @@ body {
     padding-top: 77px;
 }
 
+#main-div {
+    display: flex;
+    height: 100vh;
+}
+
+.left-panel {
+  flex: 0 0 300px; /* Set a fixed width for the left panel */
+  overflow: auto;
+  padding: 20px;
+}
+
+.directories-tree {
+    display: flex;
+    flex-direction: row;
+}
+
+.directories-tree i {
+    font-size: 15px;
+}
+
+.directories-tree h1 {
+    font-size: 13px;
+    width: 250px;
+    font-weight: 3px;
+    text-align: left;
+    color: black;
+    word-wrap: break-word;
+    padding: 2px;
+}
+
+.directories-tree:hover {
+    cursor: pointer;
+    background: #ccc;
+    border-radius: 5px;
+}
+
+.separator {
+  width: 2px;
+  height: 1000px;
+  background-color: black;
+  cursor: ew-resize;
+}
+
+.right-panel {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
 .folder:hover i {
     background-color: #bfbfbf;
     opacity: 0.5;

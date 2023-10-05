@@ -114,6 +114,25 @@ fn app(cx: Scope) -> Element {
                 }, "cancel" }
             },
             div {
+                class: "left-panel",
+                files.read().path_stack.iter().enumerate().map(|(directory_id, path)| {
+                    rsx!(
+                        div {
+                            class: "directories-tree",
+                            ondblclick: move |_| {
+
+                            },
+                            i { class: "material-symbols-outlined", {}, "keyboard_arrow_right" },
+                            //i { class: "material-symbols-outlined", {}, "keyboard_arrow_down" }
+                            h1 { "{path}" }
+                        }
+                    )
+                })
+            },
+            // TODO -> Resizable separator.
+            div { class: "separator" },
+            div {
+                class: "right-panel",
                 main {
                     style: "{MAIN_ASSETS.lock().unwrap()}",
                     files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
