@@ -8,7 +8,7 @@
 }
 
 body {
-    padding-top: 77px;
+    padding-top: 70px;
 }
 
 main {
@@ -31,30 +31,35 @@ main {
     cursor: pointer;
 }
 
+.folder:hover h1 {
+   background-color: #bfbfbf;
+   opacity: 0.5;
+   border-radius: 5px;
+}
+
 table {
     height: auto;
-    width: 1000px;
-    padding: 2px;
+    width: auto;
     border-collapse: separate;
     border-spacing: 2px;
     border: 1px solid gray;
     border-radius: 5px;
     margin-top: 20px;
-    line-height: 1;
 }
 
 tr {
-    height: 2px;
+    height: 0px;
 }
 
 h1 {
     position: relative;
     display: block;
+    width: 500px;
     top: -5px;
     font-size: 13px;
     font-weight: 12px;
-    text-align: center;
-    padding-right: -7px;
+    text-align: left;
+    padding-top: 5px;
     word-wrap: break-word;
 }
 
