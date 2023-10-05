@@ -13,7 +13,6 @@ body {
 
 #main-div {
     display: flex;
-    height: 100vh;
 }
 
 .left-panel {
@@ -49,7 +48,7 @@ body {
 
 .separator {
   width: 2px;
-  height: 1000px;
+  height: auto;
   background-color: black;
   cursor: ew-resize;
 }

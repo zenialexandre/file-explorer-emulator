@@ -45,7 +45,7 @@ fn main() {
         app,
         Config::default().with_disable_context_menu(true).with_window(WindowBuilder::new()
             .with_resizable(true).with_title("File Explorer Emulator")
-            .with_inner_size(LogicalSize::new(900.0, 700.0))
+            .with_inner_size(LogicalSize::new(1100.0, 800.0))
             .with_position(LogicalPosition::new(100, 50))
             .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
             .with_focused(true)
@@ -113,6 +113,8 @@ fn app(cx: Scope) -> Element {
                     context_menu::close_context_menu_on_demand(cx);
                 }, "cancel" }
             },
+            /*
+            TODO -> Left div with the directories-tree.
             div {
                 class: "left-panel",
                 files.read().path_stack.iter().enumerate().map(|(directory_id, path)| {
@@ -129,10 +131,9 @@ fn app(cx: Scope) -> Element {
                     )
                 })
             },
-            // TODO -> Resizable separator.
-            div { class: "separator" },
+            div { class: "separator" },*/
             div {
-                class: "right-panel",
+                //class: "right-panel",
                 main {
                     style: "{MAIN_ASSETS.lock().unwrap()}",
                     files.read().path_names.iter().enumerate().map(|(directory_id, path)| {

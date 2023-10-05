@@ -41,6 +41,7 @@ main {
 table {
     height: auto;
     width: auto;
+    padding: 2px;
     border-collapse: separate;
     border-spacing: 2px;
     border: 1px solid gray;
@@ -50,6 +51,13 @@ table {
 
 tr {
     height: 0px;
+}
+
+tr i {
+    color: #607D8B;
+    text-align: left;
+    font-size: 8px;
+    padding: 8px;
 }
 
 h1 {
@@ -73,6 +81,7 @@ header {
     background-color: #9e43ff;
     color: white;
     display: flex;
+    flex-direction: row;
     align-items: center;
     z-index: 10;
 }
