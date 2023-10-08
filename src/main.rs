@@ -59,7 +59,7 @@ fn app(cx: Scope) -> Element {
     let context_menu_active: &UseState<bool> = use_state(cx, || false);
     let is_search_field_enabled: &UseState<bool> = use_state(cx, || false);
     let is_table_layout_triggered: &UseState<bool> = use_state(cx, || false);
-    *MAIN_ASSETS.lock().unwrap() = "padding: 10px 50px;".to_string();
+    *MAIN_ASSETS.lock().unwrap() = "padding: 20px 60px;".to_string();
     *FOLDER_ASSETS.lock().unwrap() = r"
         float: left;
         width: 100px;
@@ -203,7 +203,7 @@ fn set_layout_option(is_table_layout_triggered: &bool, icon_type: String, path_e
 fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, _last_modification_date_formatted: String,
                              file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
     *MAIN_ASSETS.lock().unwrap() = r"
-        padding: 10px 50px;
+        padding: 20px 60px;
         display: flex;
         flex-direction: column;
         outline: none;
@@ -262,6 +262,8 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
                     td { h1 { style: "{h1_assets}", "{file_type}" } },
                     if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
                         rsx!( td { h1 { style: "{h1_assets}", "{file_size} KB" } } )
+                    } else {
+                        rsx!( td { h1 { style: "{h1_assets}", "N/A" } } )
                     }
                 }
             }
@@ -355,7 +357,7 @@ fn handle_context_menu_event(cx: Scope, files: &UseRef<Files>, context_menu_even
     context_menu_active.set(true);
 
     let context_menu_dom: VirtualDom = VirtualDom::new_with_props(context_menu_popup,
-                                                                  context_menu_popupProps { files_props: files.clone() });
+        context_menu_popupProps { files_props: files.clone() });
     context_menu::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
 }
 

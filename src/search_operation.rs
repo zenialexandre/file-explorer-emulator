@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 use std::ops::Not;
+use std::rc::Rc;
 use std::string::ToString;
+use std::sync::Mutex;
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
+use dioxus_desktop::tao::dpi::LogicalPosition;
 use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 use walkdir::WalkDir;
 
@@ -11,9 +14,12 @@ use crate::Files;
 use crate::window_helper;
 use crate::REGULAR_FILE;
 
+lazy_static! { static ref SEARCHED_PATH_CLICKED: Mutex<String> = Mutex::new("".to_string()); }
+
 pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRef<Files>,
                                             is_search_field_enabled: &'a UseState<bool>) -> LazyNodes<'a, 'a> {
     let search_value: &UseState<String> = use_state(cx, || String::new());
+    let search_results_map = use_ref(cx, || HashMap::new());
 
     if is_search_field_enabled.get() == &true {
         let search_field_assets = r"
@@ -39,7 +45,7 @@ pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRe
                 },
                 onkeydown: |keydown_event| {
                     if keydown_event.inner().code() == Code::Enter {
-                        execute_search_operation(cx, files, search_value.to_string().trim().to_string());
+                        execute_search_operation(cx, files, search_results_map, search_value.to_string().trim().to_string());
                     }
                 }
             },
@@ -51,9 +57,7 @@ pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRe
     }
 }
 
-fn execute_search_operation(cx: &ScopeState, files: &UseRef<Files>, search_value: String) {
-    let search_results_map = use_ref(cx, || HashMap::new());
-
+fn execute_search_operation(cx: &ScopeState, files: &UseRef<Files>, search_results_map: &UseRef<HashMap<usize, String>>, search_value: String) {
     if search_value.is_empty() {
         files.write().path_stack.clear();
         files.write().path_names.clear();
@@ -87,14 +91,13 @@ fn create_search_popup(cx: &ScopeState, files: UseRef<Files>, search_results_map
             .with_resizable(true).with_focused(true)
             .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false)
             .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
-            .with_title("Search").with_inner_size(LogicalSize::new(680.0, 400.0)))
+            .with_position(LogicalPosition::new(100, 50))
+            .with_title("Search").with_inner_size(LogicalSize::new(680.0, 450.0)))
     );
 }
 
 #[inline_props]
 pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search_results_map_props: UseRef<HashMap<usize, String>>) -> Element {
-    let searched_object_path_clicked = use_state(cx, || "".to_string());
-
     cx.render(rsx!(
         div {
             link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel: "stylesheet", }
@@ -102,17 +105,17 @@ pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search
             style { include_str!("./assets/search_popup.css") }
             header {
                 i { class: "material-symbols-outlined", onclick: move |_| {
-                   open_content_location(cx, files_props, searched_object_path_clicked.get().to_string());
+                   open_content_location(cx, files_props, SEARCHED_PATH_CLICKED.lock().unwrap().to_string());
                 }, "folder_open" },
-                h1 { top: "-7px;", "Open File/Folder Location." },
+                h1 { id: "open-content-h1", "Open Location." },
                 span { }
-                i { top: "-7px;", class: "material-icons", onclick: move |_| {
+                i { class: "material-icons", onclick: move |_| {
                     dioxus_desktop::use_window(cx).close();
                 }, "cancel" }
             },
             div {
                 main {
-                    create_search_results_table(cx.scope, files_props, search_results_map_props.clone(), searched_object_path_clicked.clone())
+                    create_search_results_table(cx.scope, files_props, search_results_map_props.clone())
                 }
             }
         }
@@ -120,8 +123,7 @@ pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search
 }
 
 fn create_search_results_table<'a>(cx: &'a ScopeState, files_props: &'a UseRef<Files>,
-                                   search_results_map_props: UseRef<HashMap<usize, String>>,
-                                   searched_object_path_clicked: UseState<String>) -> LazyNodes<'a, 'a> {
+                                   search_results_map_props: UseRef<HashMap<usize, String>>) -> LazyNodes<'a, 'a> {
     if search_results_map_props.read().is_empty() {
         rsx!(
             i { class: "material-symbols-outlined", {}, "sentiment_dissatisfied" }
@@ -131,8 +133,10 @@ fn create_search_results_table<'a>(cx: &'a ScopeState, files_props: &'a UseRef<F
     } else {
         rsx!(
             search_results_map_props.read().iter().map(|searched_object| {
-                let searched_object_path = searched_object.1.to_string();
-                let icon_type = window_helper::get_icon_type(searched_object_path.clone());
+                let searched_path = Rc::new(searched_object.1.to_string());
+                let icon_type = window_helper::get_icon_type(searched_path.to_string());
+                let searched_path_on_click = Rc::clone(&searched_path);
+                let searched_path_on_dbclick = Rc::clone(&searched_path);
 
                 rsx!(
                     table {
@@ -141,13 +145,13 @@ fn create_search_results_table<'a>(cx: &'a ScopeState, files_props: &'a UseRef<F
                                 class: "folder",
                                 tabindex: "0",
                                 onclick: move |_| {
-                                    //searched_object_path_clicked.set(searched_object_path.clone());
+                                    *SEARCHED_PATH_CLICKED.lock().unwrap() = searched_path_on_click.to_string();
                                 },
                                 ondblclick: move |_| {
-                                    open_content(cx, files_props, searched_object_path.clone());
+                                    open_content(cx, files_props, searched_path_on_dbclick.to_string());
                                 },
                                 td { i { class: "material-icons", "{icon_type}" } },
-                                td { h1 { "{searched_object_path}" } }
+                                td { h1 { "{searched_path}" } }
                             }
                         }
                     }
@@ -162,20 +166,14 @@ fn open_content_location(cx: &ScopeState, files_props: &UseRef<Files>, searched_
         let mut entry_stack: Vec<&str> = searched_object_path.split("\\").collect();
         entry_stack.pop();
         let entry_stack_joined = entry_stack.join("\\");
-        files_props.write().path_stack.push(entry_stack_joined);
-        files_props.write().reload_path_list();
-        dioxus_desktop::use_window(cx).close();
+        window_helper::open_folder(cx, files_props, entry_stack_joined.clone());
     }
 }
 
 fn open_content(cx: &ScopeState, files_props: &UseRef<Files>, searched_object_path: String) {
-    let searched_object_path_internal = searched_object_path.clone();
-
-    if window_helper::get_file_type_formatted(searched_object_path_internal.clone()) == REGULAR_FILE {
-        window_helper::open_file(searched_object_path_internal.as_str());
+    if window_helper::get_file_type_formatted(searched_object_path.clone()) == REGULAR_FILE {
+        window_helper::open_file(searched_object_path.as_str());
     } else {
-        files_props.write().path_stack.push(searched_object_path_internal.clone().to_string());
-        files_props.write().reload_path_list();
-        dioxus_desktop::use_window(cx).close();
+        window_helper::open_folder(cx, files_props, searched_object_path);
     }
 }

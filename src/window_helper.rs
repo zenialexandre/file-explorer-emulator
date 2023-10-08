@@ -121,6 +121,26 @@ pub(crate) fn open_file(selected_path: &str) {
     let _ = opener::open(selected_path);
 }
 
+pub(crate) fn open_folder(cx: &ScopeState, files_props: &UseRef<Files>, searched_object_path: String) {
+    let searched_object_path_splitted = searched_object_path.split("\\");
+    files_props.write().path_stack.clear();
+
+    for (index, splitted_path) in searched_object_path_splitted.enumerate() {
+        if index == 0 {
+            let home_path: Vec<&str> = splitted_path.split("//").collect();
+            files_props.write().path_stack.push(format!("{}//", home_path.get(0).unwrap().to_string()));
+            files_props.write().path_stack
+                .push(format!("{}//{}", home_path.get(0).unwrap(), home_path.get(1).unwrap()));
+        } else {
+            let last_stack = files_props.read().path_stack.last().unwrap().to_string();
+            files_props.write().path_stack
+                .push(format!("{}\\{}", last_stack, splitted_path));
+        }
+    }
+    files_props.write().reload_path_list();
+    dioxus_desktop::use_window(cx).close();
+}
+
 pub(crate) fn set_element_focus(main_element: &UseRef<Vec<Event<MountedData>>>) {
     if let Some(element) = main_element.read().last() {
         element.set_focus(true);
