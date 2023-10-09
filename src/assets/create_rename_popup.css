@@ -27,7 +27,7 @@
 .forms-div label {
     font-family: 'Rubik', sans-serif;
     text-align: left;
-    font-weight: 5px;
+    font-weight: 5;
     font-size: 15px;
 }
 
@@ -38,7 +38,7 @@
 
 #enable-file-creation {
     width: 20px;
-    vertical-align: left;
+    vertical-align: baseline;
 }
 
 .material-icons {

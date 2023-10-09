@@ -44,7 +44,7 @@ table {
     padding: 2px;
     border-collapse: separate;
     border-spacing: 2px;
-    border: 1px solid gray;
+    border: 1px solid rgb(128, 128, 128);
     border-radius: 5px;
     margin-top: 20px;
 }

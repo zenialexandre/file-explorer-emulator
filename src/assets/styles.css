@@ -90,8 +90,7 @@ body {
     font-size: 15px;
     color: white;
     border-radius: 4px;
-    padding: 10px 20px;
-    padding-right: 30px;
+    padding: 10px 30px 10px 20px;
     width: 80px;
     opacity: 0;
     transition-delay: 2s;
