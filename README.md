@@ -3,11 +3,11 @@
 -------------------
 <h1>Images Layout:</h1>
 
-![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/738d8550-2a9e-443e-84a2-5e7856538288)
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4f537f14-ea16-42cb-ac34-ea2fb8ae35b4)
 
 <h1>Table Layout:</h1>
 
-![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/2d01239c-eba9-44ba-8953-32612656d98b)
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/495743ad-8565-40dc-af00-b3b758e03933)
 
 -------------------
 
@@ -31,3 +31,18 @@ Ctrl + X = Cut
 Ctrl + Equal = Images Layout
 
 Ctrl + Minus = Table Layout
+
+-------------------
+
+<h1>Context Menu:</h1>
+
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/90b9c936-ae82-43e3-b81b-d86db3fbc457)
+
+-------------------
+
+<h1>Search Field and Popup:</h1>
+
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/d2b3dc74-4f96-439a-9843-4beea7eab0bb)
+
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/3713f971-a164-42f4-8bda-861cac7487bc)
+
