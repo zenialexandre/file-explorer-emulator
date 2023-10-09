@@ -1,5 +1,6 @@
 * {
     background-color: #dccbf7;
+    font-family: 'Rubik', sans-serif;
 }
 
 .central-div {
@@ -19,10 +20,21 @@
 }
 
 .central-div-label {
+    display: flex;
+    flex-direction: row;
+}
+
+.central-div-label h1 {
     font-family: 'Rubik', sans-serif;
     text-align: left;
     font-weight: 5px;
     font-size: 15px;
+}
+
+#directory-file-name {
+    width: 200px;
+    border-radius: 5px;
+    height: 18px;
 }
 
 .material-icons {

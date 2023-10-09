@@ -1,5 +1,6 @@
+use std::ops::Not;
 use dioxus::prelude::*;
-use dioxus_desktop::tao::window::{Icon as TaoIcon};
+use dioxus_desktop::tao::window::{Icon as TaoIcon, WindowId};
 use image::GenericImageView;
 use std::sync::Mutex;
 use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
@@ -144,5 +145,11 @@ pub(crate) fn open_folder(cx: &ScopeState, files_props: &UseRef<Files>, searched
 pub(crate) fn set_element_focus(main_element: &UseRef<Vec<Event<MountedData>>>) {
     if let Some(element) = main_element.read().last() {
         element.set_focus(true);
+    }
+}
+
+pub(crate) fn close_generic_popup_window(cx: Scope, mut generic_popup_id: Vec<WindowId>) {
+    if generic_popup_id.is_empty().not() {
+        dioxus_desktop::use_window(cx).close_window(generic_popup_id.pop().unwrap());
     }
 }

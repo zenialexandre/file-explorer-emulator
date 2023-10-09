@@ -7,7 +7,7 @@ use dioxus::prelude::*;
 use crate::Files;
 use crate::{conflict_popup, conflict_popupProps};
 use crate::{conflict_process, window_helper, rename_operation};
-use crate::{NEW_FILE_OR_DIR_NAME, CLICKED_DIRECTORY_ID};
+use crate::{NEW_FILE_OR_DIR_NAME, CLICKED_DIRECTORY_ID, GENERIC_POPUP_ID};
 
 pub(crate) fn execute_create_operation(files: &UseRef<Files>, new_file_or_dir_name: &Mutex<String>, enable_file_creation: &UseState<bool>) -> bool {
     let selected_current_stack: String = window_helper::get_selected_current_stack(files);
@@ -37,12 +37,18 @@ fn verify_extension(mut selected_current_stack: String, new_file_or_dir_name: &M
     }
 
     selected_current_stack.push_str(format!("\\{}", new_file_or_dir_name.lock().unwrap()).as_str().trim());
-    let _ = File::create(selected_current_stack.clone());
+    match File::create(selected_current_stack.clone()) {
+        Ok(_) => println!(),
+        Err(error) => println!("{}", error)
+    }
     add_new_file(selected_current_stack.clone());
 }
 
 fn add_new_file(selected_current_stack: String) {
-    let _ = std::fs::OpenOptions::new().write(true).create_new(true).open(selected_current_stack.split("\\").last().unwrap());
+    match std::fs::OpenOptions::new().write(true).create_new(true).open(selected_current_stack.split("\\").last().unwrap()) {
+        Ok(_) => println!(),
+        Err(error) => println!("{}", error)
+    }
 }
 
 fn is_recursive_dir(new_file_or_dir_name: &str) -> bool {
@@ -53,11 +59,12 @@ pub(crate) fn add_new_dir(selected_current_stack: String, is_recursive_dir_input
     match is_recursive_dir_input {
         true => std::fs::create_dir_all(selected_current_stack.clone()),
         false => std::fs::create_dir(selected_current_stack.clone()),
-    }.unwrap_or_else(|error| panic!("Error on create_operation: {}", error));
+    }.unwrap_or_else(|error| println!("Error on create_operation: {}", error));
 }
 
 #[inline_props]
 pub(crate) fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &'a str) -> Element {
+    GENERIC_POPUP_ID.lock().unwrap().push(dioxus_desktop::use_window(cx).id());
     let enable_file_creation = use_state(cx, || false);
 
     cx.render(rsx! {

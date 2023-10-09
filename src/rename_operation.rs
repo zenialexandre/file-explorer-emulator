@@ -18,7 +18,7 @@ pub(crate) fn execute_rename_operation(files: &UseRef<Files>, clicked_directory_
                     format!("{}", selected_new_path.trim()));
             files.write().reload_path_list();
         },
-        Err(error) => panic!("{}", error)
+        Err(error) => println!("{}", error)
     }
 }
 

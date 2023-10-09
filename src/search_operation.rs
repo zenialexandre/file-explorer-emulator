@@ -12,7 +12,7 @@ use walkdir::WalkDir;
 
 use crate::Files;
 use crate::window_helper;
-use crate::REGULAR_FILE;
+use crate::{REGULAR_FILE, GENERIC_POPUP_ID};
 
 lazy_static! { static ref SEARCHED_PATH_CLICKED: Mutex<String> = Mutex::new("".to_string()); }
 
@@ -98,6 +98,8 @@ fn create_search_popup(cx: &ScopeState, files: UseRef<Files>, search_results_map
 
 #[inline_props]
 pub(crate) fn search_results_popup(cx: Scope, files_props: UseRef<Files>, search_results_map_props: UseRef<HashMap<usize, String>>) -> Element {
+    GENERIC_POPUP_ID.lock().unwrap().push(dioxus_desktop::use_window(cx).id());
+
     cx.render(rsx!(
         div {
             link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel: "stylesheet", }

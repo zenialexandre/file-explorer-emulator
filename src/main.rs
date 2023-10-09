@@ -14,6 +14,7 @@ use dioxus::html::input_data::keyboard_types::{Code, Modifiers};
 use std::sync::Mutex;
 use chrono::{DateTime, Utc};
 use dioxus_desktop::tao::dpi::LogicalPosition;
+use dioxus_desktop::tao::window::WindowId;
 
 use crate::context_menu::{context_menu_popup, context_menu_popupProps};
 use crate::delete_operation::{delete_popup, delete_popupProps};
@@ -25,6 +26,7 @@ use crate::context_menu::IS_CONTEXT_ON_ITEM;
 #[macro_use]
 extern crate lazy_static;
 
+lazy_static! { pub(crate) static ref GENERIC_POPUP_ID: Mutex<Vec<WindowId>> = Mutex::new(Vec::new()); }
 lazy_static! { pub(crate) static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0); }
 lazy_static! { pub(crate) static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string()); }
 lazy_static! { pub(crate) static ref PREVIOUS_OPERATION_DONE: Mutex<String> = Mutex::new("".to_string()); }
@@ -109,8 +111,9 @@ fn app(cx: Scope) -> Element {
                     }
                 }, "search" }
                 i { class: "material-icons", onclick: move |_| {
-                    dioxus_desktop::use_window(cx).close();
+                    window_helper::close_generic_popup_window(cx, (GENERIC_POPUP_ID.lock().unwrap()).to_vec());
                     context_menu::close_context_menu_on_demand(cx);
+                    dioxus_desktop::use_window(cx).close();
                 }, "cancel" }
             },
             /*
@@ -343,7 +346,7 @@ fn handle_double_click_event(files: &UseRef<Files>, directory_id: usize, main_el
                 window_helper::set_element_focus(main_element);
             }
         },
-        Err(error) => panic!("{}", error)
+        Err(error) => println!("{}", error)
     }
 }
 

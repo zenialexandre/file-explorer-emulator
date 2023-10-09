@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 
 use crate::Files;
 use crate::{window_helper, delete_operation};
-use crate::CLICKED_DIRECTORY_ID;
+use crate::{CLICKED_DIRECTORY_ID, GENERIC_POPUP_ID};
 
 pub(crate) fn execute_delete_operation(files_props: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) {
     let selected_full_path: String = window_helper::get_selected_full_path(files_props, clicked_directory_id);
@@ -25,6 +25,8 @@ pub(crate) fn execute_delete_operation(files_props: &UseRef<Files>, clicked_dire
 
 #[inline_props]
 pub(crate) fn delete_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
+    GENERIC_POPUP_ID.lock().unwrap().push(dioxus_desktop::use_window(cx).id());
+
     cx.render(rsx! {
         div {
             link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
