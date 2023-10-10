@@ -1,7 +1,7 @@
 # <h1> ![cool_circle](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4aea6276-9e97-445d-9c5c-8476d280e143) file-explorer-emulator </h1>
 
 -------------------
-<p style="font-size: 10px;font-weigth: 5px">
+<p style="font-size:10px;">
 File Explorer Emulator - made for my Operating Systems classes at the sixth semester of college.
 Made with Rust and the Dioxus framework.
 
