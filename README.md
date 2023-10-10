@@ -2,7 +2,8 @@
 
 -------------------
 
-** File Explorer Emulator - made for my Operating Systems classes at the sixth semester of college.
+<strong>
+File Explorer Emulator - made for my Operating Systems classes at the sixth semester of college.
 Made with Rust and the Dioxus framework.
 
 -- Keyboard Commands:
@@ -21,7 +22,8 @@ Ctrl + X = Cut
 
 Ctrl + Equal = Images Layout
 
-Ctrl + Minus = Table Layout **
+Ctrl + Minus = Table Layout
+</strong>
 
 -------------------
 
