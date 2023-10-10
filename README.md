@@ -1,16 +1,7 @@
 # <h1> ![cool_circle](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4aea6276-9e97-445d-9c5c-8476d280e143) file-explorer-emulator </h1>
 
 -------------------
-<h1>Images Layout:</h1>
-
-![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4f537f14-ea16-42cb-ac34-ea2fb8ae35b4)
-
-<h1>Table Layout:</h1>
-
-![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/495743ad-8565-40dc-af00-b3b758e03933)
-
--------------------
-
+<p font-wigth: bold; font-size: 10px;>
 File Explorer Emulator - made for my Operating Systems classes at the sixth semester of college.
 Made with Rust and the Dioxus framework.
 
@@ -31,6 +22,15 @@ Ctrl + X = Cut
 Ctrl + Equal = Images Layout
 
 Ctrl + Minus = Table Layout
+</p>
+
+-------------------
+
+<h1>Images Layout:</h1>
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4f537f14-ea16-42cb-ac34-ea2fb8ae35b4)
+<br>
+<h1>Table Layout:</h1>
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/495743ad-8565-40dc-af00-b3b758e03933)
 
 -------------------
 
