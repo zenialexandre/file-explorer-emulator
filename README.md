@@ -21,9 +21,9 @@ Ctrl + V = Paste
 
 Ctrl + X = Cut
 
-Ctrl + Equal = Images Layout
+Ctrl + Equal 'or NumpadAdd' = Images Layout
 
-Ctrl + Minus = Table Layout
+Ctrl + Minus 'or NumpadSubtract' = Table Layout
 </strong>
 
 -------------------
