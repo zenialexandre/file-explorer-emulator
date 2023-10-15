@@ -24,6 +24,9 @@ Ctrl + X = Cut
 Ctrl + Equal 'or NumpadAdd' = Images Layout
 
 Ctrl + Minus 'or NumpadSubtract' = Table Layout
+
+Enter (inside of the Search Field) = Execute search inside of the current stack
+
 </strong>
 
 -------------------
