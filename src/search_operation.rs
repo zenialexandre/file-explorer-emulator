@@ -71,15 +71,13 @@ fn execute_search_operation(cx: &ScopeState, files: &UseRef<Files>, search_resul
 }
 
 fn search(files: UseRef<Files>, search_results_map: UseRef<HashMap<usize, String>>, search_value: String) {
-    let mut iteration_counter = 1;
+    let directories_filtered: Vec<String> = WalkDir::new(files.read().current())
+        .into_iter().filter_map(|dir_entry| dir_entry.ok())
+        .filter(|dir_entry| dir_entry.file_name().to_string_lossy().contains(&search_value))
+        .map(|dir_entry| dir_entry.path().to_string_lossy().to_string()).collect();
 
-    for dir_entry in WalkDir::new(files.read().current()).into_iter().filter_map(|dir_entry_mapped| dir_entry_mapped.ok()) {
-        let name = dir_entry.file_name().to_string_lossy().to_string();
-        let path_name = dir_entry.path().to_string_lossy().to_string();
-        if name.contains(search_value.as_str()) {
-            search_results_map.write().insert(iteration_counter, path_name);
-        }
-        iteration_counter += 1;
+    for (iteration_counter, path_name) in directories_filtered.iter().enumerate() {
+        search_results_map.write().insert(iteration_counter + 1, path_name.clone());
     }
 }
 
