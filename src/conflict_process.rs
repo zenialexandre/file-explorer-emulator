@@ -16,7 +16,7 @@ pub(crate) fn check_file_or_dir_conflict(file_or_dir_name: String, mut selected_
 #[inline_props]
 pub(crate) fn conflict_popup(cx: Scope, files_props: UseRef<Files>, enable_file_creation_props: UseState<bool>) -> Element {
     GENERIC_POPUP_ID.lock().unwrap().push(dioxus_desktop::use_window(cx).id());
-    let enable_rename_field = use_state(cx, || false);
+    let enable_rename_field: &UseState<bool> = use_state(cx, || false);
 
     cx.render(rsx! {
         div {
@@ -44,7 +44,7 @@ pub(crate) fn conflict_popup(cx: Scope, files_props: UseRef<Files>, enable_file_
                         r#type: "checkbox",
                         checked: "{enable_rename_field}",
                         id: "enable_rename_field",
-                        oninput: move |check_event| {
+                        oninput: move |check_event: Event<FormData>| {
                             enable_rename_field.set(check_event.value.parse().unwrap());
                         }
                     }
@@ -61,7 +61,7 @@ pub(crate) fn conflict_popup(cx: Scope, files_props: UseRef<Files>, enable_file_
                                 r#type: "text",
                                 placeholder: "Directory/File new name",
                                 id: "directory-file-name",
-                                oninput: |type_event| {
+                                oninput: |type_event: Event<FormData>| {
                                     *NEW_FILE_OR_DIR_NAME.lock().unwrap() = type_event.value.to_string()
                                 }
                             },

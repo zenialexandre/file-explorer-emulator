@@ -20,8 +20,8 @@ pub(crate) fn execute_copy_operation(files: &UseRef<Files>, clicked_directory_id
 }
 
 pub(crate) fn execute_paste_operation(files: &UseRef<Files>, previous_operation_done: &Mutex<String>) {
-    let copied_file_or_dir_name_joined = COPIED_FILE_OR_DIR_NAME.lock().unwrap().join("\\");
-    let selected_current_stack = window_helper::get_selected_current_stack(files);
+    let copied_file_or_dir_name_joined: String = COPIED_FILE_OR_DIR_NAME.lock().unwrap().join("\\");
+    let selected_current_stack: String = window_helper::get_selected_current_stack(files);
 
     paste_operation(selected_current_stack.clone(), copied_file_or_dir_name_joined.clone(), files, previous_operation_done);
     files.write().path_names.push(selected_current_stack.clone());
@@ -37,7 +37,7 @@ fn paste_operation(selected_current_stack: String, copied_file_or_dir_name_joine
 }
 
 fn paste_file(selected_current_stack: String, copied_file_or_dir_name_joined: String, files: &UseRef<Files>, previous_operation_done: &Mutex<String>) {
-    let mut file_name = COPIED_FILE_OR_DIR_NAME.lock().unwrap().last().unwrap().to_string();
+    let mut file_name: String = COPIED_FILE_OR_DIR_NAME.lock().unwrap().last().unwrap().to_string();
 
     if conflict_process::check_file_or_dir_conflict(file_name.clone(), selected_current_stack.clone(), files)
         && window_helper::get_file_type_formatted(copied_file_or_dir_name_joined.clone()) == REGULAR_FILE.to_string() {
@@ -49,8 +49,8 @@ fn paste_file(selected_current_stack: String, copied_file_or_dir_name_joined: St
 
 fn get_restructured_file_name(file_name: String) -> String {
     *COPY_INCREMENTAL_ID.lock().unwrap() += 1;
-    let file_name_with_extension = file_name.as_str();
-    let file_extension_last_occurrence_index = file_name_with_extension.rfind(".").unwrap();
+    let file_name_with_extension: &str = file_name.as_str();
+    let file_extension_last_occurrence_index: usize = file_name_with_extension.rfind(".").unwrap();
     let (splitted_file_name, splitted_file_extension) = file_name_with_extension.split_at(file_extension_last_occurrence_index);
      format!("{splitted_file_name} Copy {copy_index}{splitted_file_extension}",
              splitted_file_name = splitted_file_name, copy_index = COPY_INCREMENTAL_ID.lock().unwrap(), splitted_file_extension = splitted_file_extension)
@@ -63,14 +63,14 @@ fn end_paste_file_operation(mut selected_current_stack: String, file_name: Strin
     if previous_operation_done.lock().unwrap().eq_ignore_ascii_case("Cut") {
         cut_operation::rename_on_cut(selected_current_stack.clone(), copied_file_or_dir_name_joined.clone());
     } else {
-        let mut new_file = File::create(selected_current_stack.clone()).unwrap_or_else(|error| panic!("{}", error));
+        let mut new_file: File = File::create(selected_current_stack.clone()).unwrap_or_else(|error| panic!("{}", error));
         let original_file = File::open(copied_file_or_dir_name_joined.as_str());
         io::copy(&mut original_file.unwrap(), &mut new_file).unwrap_or_else(|error| panic!("{}", error));
     }
 }
 
 fn paste_dir(mut selected_current_stack: String, copied_file_or_dir_name_joined: String, files: &UseRef<Files>, previous_operation_done: &Mutex<String>) {
-    let copy_options = CopyOptions::new();
+    let copy_options: CopyOptions = CopyOptions::new();
 
     if conflict_process::check_file_or_dir_conflict(copied_file_or_dir_name_joined.split("\\").last().unwrap().to_string(),
                                                     selected_current_stack.clone(), files)

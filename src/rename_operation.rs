@@ -54,7 +54,7 @@ fn restructure_dir_path<'a>(mut selected_splitted_path: Vec<&'a str>, file_or_di
 
 fn restructure_file_path<'a>(mut selected_splitted_path: Vec<&'a str>, file_or_dir_new_name: &'a String) -> String {
     let mut restructured_file_path: String = String::new();
-    let file_extension_last_occurrence_index = selected_splitted_path.last().unwrap().to_string().rfind(".");
+    let file_extension_last_occurrence_index: Option<usize> = selected_splitted_path.last().unwrap().to_string().rfind(".");
     let (_, file_extension) = selected_splitted_path.last().unwrap().split_at(file_extension_last_occurrence_index.unwrap());
     selected_splitted_path.pop();
     selected_splitted_path.push(file_or_dir_new_name.as_str());

@@ -8,6 +8,7 @@ mod cut_operation;
 mod context_menu;
 mod search_operation;
 
+use std::fs::ReadDir;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
 use dioxus::html::input_data::keyboard_types::{Code, Modifiers};
@@ -79,17 +80,17 @@ fn app(cx: Scope) -> Element {
             id: "main-div",
             autofocus: "true",
             tabindex: "0",
-            onmounted: move |element| {
+            onmounted: move |element: Event<MountedData>| {
                 main_element.write().push(element);
             },
-            onclick: move |click_event| {
+            onclick: move |click_event: Event<MouseData>| {
                 handle_click_event(cx, click_event, context_menu_active);
                 window_helper::set_element_focus(main_element);
             },
-            onkeydown: move |keydown_event| {
+            onkeydown: move |keydown_event: Event<KeyboardData>| {
                 handle_general_keyboard_events(cx, files, keydown_event, is_table_layout_triggered);
             },
-            oncontextmenu: move |context_menu_event| {
+            oncontextmenu: move |context_menu_event: Event<MouseData>| {
                 handle_context_menu_event(cx, files, context_menu_event, context_menu_active);
                 *IS_CONTEXT_ON_ITEM.lock().unwrap() = false;
             },
@@ -140,7 +141,7 @@ fn app(cx: Scope) -> Element {
                 main {
                     style: "{MAIN_ASSETS.lock().unwrap()}",
                     files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
-                        let path_end = path.split('\\').last().unwrap_or(path.as_str());
+                        let path_end: &str = path.split('\\').last().unwrap_or(path.as_str());
                         let icon_type: String = window_helper::get_icon_type(path.to_string());
                         let file_type: String = window_helper::get_file_type_formatted(path.to_string());
                         let path_metadata = std::fs::metadata(path.to_string());
@@ -160,17 +161,17 @@ fn app(cx: Scope) -> Element {
                                 style: "{FOLDER_ASSETS.lock().unwrap()}",
                                 key: "{path}",
                                 tabindex: "0",
-                                onkeydown: move |keydown_event| {
+                                onkeydown: move |keydown_event: Event<KeyboardData>| {
                                     handle_main_keyboard_events(cx, files, keydown_event);
                                 },
                                 ondblclick: move |_| {
                                     handle_double_click_event(files, directory_id, main_element);
                                 },
-                                onclick: move |click_event| {
+                                onclick: move |click_event: Event<MouseData>| {
                                     handle_click_event(cx, click_event, context_menu_active);
                                     *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
                                 },
-                                oncontextmenu: move |context_menu_event| {
+                                oncontextmenu: move |context_menu_event: Event<MouseData>| {
                                     handle_context_menu_event(cx, files, context_menu_event, context_menu_active);
                                     *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
                                     *IS_CONTEXT_ON_ITEM.lock().unwrap() = true;
@@ -225,7 +226,7 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
         cursor: pointer;
     ".to_string();
 
-    let table_assets = r"
+    let table_assets: &str = r"
         height: auto;
         width: auto;
         padding: 2px;
@@ -237,13 +238,13 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
         line-height: 1;
     ";
 
-    let i_assets = r"
+    let i_assets: &str = r"
         text-align: left;
         font-size: 20px;
         color: #607D8B;
     ";
 
-    let h1_assets = r"
+    let h1_assets: &str = r"
         top: -7px;
         font-size: 15px;
         width: 250px;
@@ -276,13 +277,13 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
 
 fn activate_images_layout<'a>(icon_type: String, path_end: String, path: String, _last_modification_date_formatted: String,
                               file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
-    let i_assets = r"
+    let i_assets: &str = r"
         margin: 0;
         font-size: 80px;
         color: #607D8B;
     ";
 
-    let h1_assets = r"
+    let h1_assets: &str = r"
         position: relative;
         display: block;
         top: -5px;
@@ -336,7 +337,7 @@ fn handle_main_keyboard_events(cx: Scope, files: &UseRef<Files>, keydown_event: 
 }
 
 fn handle_double_click_event(files: &UseRef<Files>, directory_id: usize, main_element: &UseRef<Vec<Event<MountedData>>>) {
-    let selected_full_path = window_helper::get_selected_full_path(files, &CLICKED_DIRECTORY_ID);
+    let selected_full_path: String = window_helper::get_selected_full_path(files, &CLICKED_DIRECTORY_ID);
     match std::fs::metadata(selected_full_path.clone()) {
         Ok(path_metadata) => {
             if path_metadata.is_file() {
@@ -368,7 +369,7 @@ fn handle_context_menu_event(cx: Scope, files: &UseRef<Files>, context_menu_even
 
 impl Files {
     fn new() -> Self {
-      let mut files = Self {
+      let mut files: Files = Self {
           path_stack: vec!["C://".to_string()],
           path_names: vec![],
           error: None,
@@ -378,11 +379,11 @@ impl Files {
     }
 
     fn reload_path_list(&mut self) {
-        let current_path = self.path_stack.last().unwrap();
-        let paths = match std::fs::read_dir(current_path) {
+        let current_path: &String = self.path_stack.last().unwrap();
+        let paths: ReadDir = match std::fs::read_dir(current_path) {
             Ok(e) => e,
             Err(error) => {
-                let error = format!("An error occurred: {error:?}");
+                let error: String = format!("An error occurred: {error:?}");
                 self.error = Some(error);
                 self.path_stack.pop();
                 return;

@@ -19,10 +19,10 @@ lazy_static! { static ref SEARCHED_PATH_CLICKED: Mutex<String> = Mutex::new("".t
 pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRef<Files>,
                                             is_search_field_enabled: &'a UseState<bool>) -> LazyNodes<'a, 'a> {
     let search_value: &UseState<String> = use_state(cx, || String::new());
-    let search_results_map = use_ref(cx, || HashMap::new());
+    let search_results_map: &UseRef<HashMap<usize, String>> = use_ref(cx, || HashMap::new());
 
     if is_search_field_enabled.get() == &true {
-        let search_field_assets = r"
+        let search_field_assets: &str = r"
             text-align: left;
             font-size: 13px;
             font-weight: 2px;
@@ -40,10 +40,10 @@ pub(crate) fn create_search_input_field<'a>(cx: &'a ScopeState, files: &'a UseRe
                 autofocus: "true",
                 r#type: "text",
                 placeholder: "Search inside the current stack...",
-                oninput: |type_event| {
+                oninput: |type_event: Event<FormData>| {
                     search_value.set(type_event.value.to_string());
                 },
-                onkeydown: |keydown_event| {
+                onkeydown: |keydown_event: Event<KeyboardData>| {
                     if keydown_event.inner().code() == Code::Enter {
                         execute_search_operation(cx, files, search_results_map, search_value.to_string().trim().to_string());
                     }
@@ -133,10 +133,10 @@ fn create_search_results_table<'a>(cx: &'a ScopeState, files_props: &'a UseRef<F
     } else {
         rsx!(
             search_results_map_props.read().iter().map(|searched_object| {
-                let searched_path = Rc::new(searched_object.1.to_string());
-                let icon_type = window_helper::get_icon_type(searched_path.to_string());
-                let searched_path_on_click = Rc::clone(&searched_path);
-                let searched_path_on_dbclick = Rc::clone(&searched_path);
+                let searched_path: Rc<String> = Rc::new(searched_object.1.to_string());
+                let icon_type: String = window_helper::get_icon_type(searched_path.to_string());
+                let searched_path_on_click: Rc<String> = Rc::clone(&searched_path);
+                let searched_path_on_dbclick: Rc<String> = Rc::clone(&searched_path);
 
                 rsx!(
                     table {
@@ -165,7 +165,7 @@ fn open_content_location(cx: &ScopeState, files_props: &UseRef<Files>, searched_
     if searched_object_path.is_empty().not() {
         let mut entry_stack: Vec<&str> = searched_object_path.split("\\").collect();
         entry_stack.pop();
-        let entry_stack_joined = entry_stack.join("\\");
+        let entry_stack_joined: String = entry_stack.join("\\");
         window_helper::open_folder(cx, files_props, entry_stack_joined.clone());
     }
 }

@@ -46,7 +46,7 @@ pub(crate) fn context_menu_popup(cx: Scope, files_props: UseRef<Files>) -> Eleme
         div {
             autofocus: "true",
             tabindex: "0",
-            onmounted: move |mounted_event| {
+            onmounted: move |mounted_event: Event<MountedData>| {
                 mounted_event.set_focus(true);
             },
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }

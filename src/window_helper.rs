@@ -11,7 +11,7 @@ use crate::Files;
 pub(crate) fn load_icon_by_path(file_path: &str) -> Option<TaoIcon> {
     return if let Ok(image) = image::open(file_path) {
         let (width, height) = image.dimensions();
-        let rgba_data = image.to_rgba8().into_raw();
+        let rgba_data: Vec<u8> = image.to_rgba8().into_raw();
         Some(TaoIcon::from_rgba(rgba_data, width, height).expect("Failed to load icon."))
     } else {
         None
@@ -119,7 +119,7 @@ pub(crate) fn get_selected_current_stack(files: &UseRef<Files>) -> String {
 }
 
 pub(crate) fn open_file(selected_path: &str) {
-    let _ = opener::open(selected_path);
+    opener::open(selected_path).unwrap_or_else(|error| println!("{}", error));
 }
 
 pub(crate) fn open_folder(cx: &ScopeState, files_props: &UseRef<Files>, searched_object_path: String) {
@@ -133,7 +133,7 @@ pub(crate) fn open_folder(cx: &ScopeState, files_props: &UseRef<Files>, searched
             files_props.write().path_stack
                 .push(format!("{}//{}", home_path.get(0).unwrap(), home_path.get(1).unwrap()));
         } else {
-            let last_stack = files_props.read().path_stack.last().unwrap().to_string();
+            let last_stack: String = files_props.read().path_stack.last().unwrap().to_string();
             files_props.write().path_stack
                 .push(format!("{}\\{}", last_stack, splitted_path));
         }

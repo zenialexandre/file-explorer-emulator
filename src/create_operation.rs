@@ -65,7 +65,7 @@ pub(crate) fn add_new_dir(selected_current_stack: String, is_recursive_dir_input
 #[inline_props]
 pub(crate) fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &'a str) -> Element {
     GENERIC_POPUP_ID.lock().unwrap().push(dioxus_desktop::use_window(cx).id());
-    let enable_file_creation = use_state(cx, || false);
+    let enable_file_creation: &UseState<bool> = use_state(cx, || false);
 
     cx.render(rsx! {
         div {
@@ -81,7 +81,7 @@ pub(crate) fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, tit
                         r#type: "text",
                         placeholder: "Directory/File new name",
                         id: "directory-file-name",
-                        oninput: |type_event| {
+                        oninput: |type_event: Event<FormData>| {
                             *NEW_FILE_OR_DIR_NAME.lock().unwrap() = type_event.value.to_string()
                         }
                     },
@@ -93,7 +93,7 @@ pub(crate) fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, tit
                                     r#type: "checkbox",
                                     checked: "{enable_file_creation}",
                                     id: "enable-file-creation",
-                                    oninput: move |check_event| {
+                                    oninput: move |check_event: Event<FormData>| {
                                         enable_file_creation.set(check_event.value.parse().unwrap());
                                     }
                                 }
