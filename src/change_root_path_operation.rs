@@ -51,7 +51,6 @@ pub(crate) fn change_root_path_popup(cx: Scope, files_props: UseRef<Files>) -> E
                 i {
                     class: "material-icons",
                     onclick: move |_| {
-                        println!("selected?: {}", selected_root_path.get().to_string());
                         change_root_path_operation::execute_change_root_path_operation(selected_root_path, files_props.clone());
                         dioxus_desktop::use_window(cx).close();
                     },
