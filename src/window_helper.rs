@@ -104,7 +104,7 @@ pub(crate) fn create_new_dom_generic_window_state(cx: &ScopeState, generic_dom: 
             .with_resizable(false).with_focused(true)
             .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false)
             .with_window_icon(load_icon_by_path("src/images/icon/cool_circle.png"))
-            .with_title(generic_window_name).with_inner_size(LogicalSize::new(600.0, 300.0)))
+            .with_title(generic_window_name).with_inner_size(LogicalSize::new(700.0, 300.0)))
     );
 }
 
