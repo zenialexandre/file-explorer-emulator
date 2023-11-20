@@ -5,7 +5,6 @@ use image::GenericImageView;
 use std::sync::Mutex;
 use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
 use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
-use winapi::shared::minwindef::DWORD;
 
 use crate::Files;
 
@@ -152,20 +151,5 @@ pub(crate) fn set_element_focus(main_element: &UseRef<Vec<Event<MountedData>>>) 
 pub(crate) fn close_generic_popup_window(cx: Scope, mut generic_popup_id: Vec<WindowId>) {
     if generic_popup_id.is_empty().not() {
         dioxus_desktop::use_window(cx).close_window(generic_popup_id.pop().unwrap());
-    }
-}
-
-pub(crate) fn get_available_devices_paths() -> Vec<String> {
-    unsafe {
-        let bitmask: DWORD = winapi::um::fileapi::GetLogicalDrives();
-        let mut available_devices_paths: Vec<String> = Vec::new();
-
-        for i in 0..26 {
-            if (bitmask & (1 << i)) != 0 {
-                let drive_letter = (b'A' + i as u8) as char;
-                available_devices_paths.push(format!("{}://", drive_letter));
-            }
-        }
-        available_devices_paths
     }
 }

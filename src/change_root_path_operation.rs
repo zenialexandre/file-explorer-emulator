@@ -1,8 +1,8 @@
 use dioxus::hooks::UseRef;
 use dioxus::prelude::*;
+use winapi::shared::minwindef::DWORD;
 
 use crate::Files;
-use crate::{window_helper, change_root_path_operation};
 use crate::{ROOT_PATH, GENERIC_POPUP_ID};
 
 fn execute_change_root_path_operation(selected_root_path: &UseState<String>, files_props: UseRef<Files>) {
@@ -15,10 +15,25 @@ fn execute_change_root_path_operation(selected_root_path: &UseState<String>, fil
     }
 }
 
+fn get_available_devices_paths() -> Vec<String> {
+    unsafe {
+        let bitmask: DWORD = winapi::um::fileapi::GetLogicalDrives();
+        let mut available_devices_paths: Vec<String> = Vec::new();
+
+        for i in 0..26 {
+            if (bitmask & (1 << i)) != 0 {
+                let drive_letter = (b'A' + i as u8) as char;
+                available_devices_paths.push(format!("{}://", drive_letter));
+            }
+        }
+        available_devices_paths
+    }
+}
+
 #[inline_props]
 pub(crate) fn change_root_path_popup(cx: Scope, files_props: UseRef<Files>) -> Element {
     let selected_root_path: &UseState<String> = use_state(cx, || "".to_string());
-    let available_devices_paths: &UseRef<Vec<String>> = use_ref(cx, || window_helper::get_available_devices_paths());
+    let available_devices_paths: &UseRef<Vec<String>> = use_ref(cx, || get_available_devices_paths());
     GENERIC_POPUP_ID.lock().unwrap().push(dioxus_desktop::use_window(cx).id());
 
     cx.render(rsx! {
@@ -51,7 +66,7 @@ pub(crate) fn change_root_path_popup(cx: Scope, files_props: UseRef<Files>) -> E
                 i {
                     class: "material-icons",
                     onclick: move |_| {
-                        change_root_path_operation::execute_change_root_path_operation(selected_root_path, files_props.clone());
+                        execute_change_root_path_operation(selected_root_path, files_props.clone());
                         dioxus_desktop::use_window(cx).close();
                     },
                     "check_circle"
@@ -61,7 +76,7 @@ pub(crate) fn change_root_path_popup(cx: Scope, files_props: UseRef<Files>) -> E
     })
 }
 
-fn create_available_devices_paths_combobox<'a>(available_devices_paths: &'a UseRef<Vec<String>>) -> LazyNodes<'a, 'a> {
+fn create_available_devices_paths_combobox(available_devices_paths: &UseRef<Vec<String>>) -> LazyNodes {
     rsx!(
         available_devices_paths.read().clone().into_iter().enumerate().map(|(_, path)| {
             rsx!(
