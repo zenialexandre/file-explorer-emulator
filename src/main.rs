@@ -67,11 +67,9 @@ fn app(cx: Scope) -> Element {
         float: left;
         width: 100px;
         height: 152px;
-        /* //padding: 20px; */
         margin-right: 50px;
         margin-bottom: 70px;
         border-radius: 2px;
-        /* //overflow: hidden; */
         cursor: pointer;
     ".to_string();
 
@@ -102,6 +100,7 @@ fn app(cx: Scope) -> Element {
                 i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
                 h1 { files.read().current() }
                 span { }
+                create_change_layout_button(cx, is_table_layout_triggered)
                 search_operation::create_search_input_field(cx, files, is_search_field_enabled)
                 i { class: "material-symbols-outlined", onclick: move |_| {
                     context_menu::close_context_menu_on_demand(cx);
@@ -117,27 +116,7 @@ fn app(cx: Scope) -> Element {
                     dioxus_desktop::use_window(cx).close();
                 }, "cancel" }
             },
-            /*
-            TODO -> Left div with the directories-tree.
             div {
-                class: "left-panel",
-                files.read().path_stack.iter().enumerate().map(|(directory_id, path)| {
-                    rsx!(
-                        div {
-                            class: "directories-tree",
-                            ondblclick: move |_| {
-
-                            },
-                            i { class: "material-symbols-outlined", {}, "keyboard_arrow_right" },
-                            //i { class: "material-symbols-outlined", {}, "keyboard_arrow_down" }
-                            h1 { "{path}" }
-                        }
-                    )
-                })
-            },
-            div { class: "separator" },*/
-            div {
-                //class: "right-panel",
                 main {
                     style: "{MAIN_ASSETS.lock().unwrap()}",
                     files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
@@ -195,6 +174,22 @@ fn app(cx: Scope) -> Element {
     })
 }
 
+fn create_change_layout_button<'a>(cx: Scope<'a>, is_table_layout_triggered: &'a UseState<bool>) -> Element<'a> {
+    cx.render(rsx!(
+        i {
+            class: "material-symbols-outlined",
+            onclick: move |_| {
+                if is_table_layout_triggered.get() == &true {
+                    is_table_layout_triggered.set(false);
+                } else {
+                    is_table_layout_triggered.set(true);
+                }
+            },
+            "sliders"
+        }
+    ))
+}
+
 fn set_layout_option(is_table_layout_triggered: &bool, icon_type: String, path_end: String, path: String,
                      _last_modification_date_formatted: String, file_type: String, file_size: u64) -> LazyNodes {
     if is_table_layout_triggered == &true {
@@ -218,11 +213,9 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
         float: left;
         width: 100px;
         height: 0px;
-        /* //padding: 20px; */
         margin-right: 50px;
         margin-bottom: 70px;
         border-radius: 2px;
-        /* //overflow: hidden; */
         cursor: pointer;
     ".to_string();
 
