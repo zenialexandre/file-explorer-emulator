@@ -21,6 +21,8 @@ Ctrl + V = Paste
 
 Ctrl + X = Cut
 
+Ctrl + B = Change Root Path
+
 Ctrl + Equal 'or NumpadAdd' = Images Layout
 
 Ctrl + Minus 'or NumpadSubtract' = Table Layout
@@ -33,23 +35,28 @@ Enter (inside of the Search Field) = Execute search inside of the current stack
 
 <h1>Images Layout:</h1>
 
-![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/4f537f14-ea16-42cb-ac34-ea2fb8ae35b4)
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/3d7a5229-c9c0-4903-9373-4de816c19e7e)
 <br>
 <h1>Table Layout:</h1>
 
-![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/495743ad-8565-40dc-af00-b3b758e03933)
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/8cdbc3b0-7817-4ec1-bde5-d1cc28b65f6c)
 
 -------------------
 
 <h1>Context Menu:</h1>
 
-![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/90b9c936-ae82-43e3-b81b-d86db3fbc457)
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/da4e0444-9b62-425b-a5a1-da60656898cd)
 
 -------------------
 
 <h1>Search Field and Popup:</h1>
 
-![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/d2b3dc74-4f96-439a-9843-4beea7eab0bb)
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/832b00da-fa16-4575-aa0c-dbcfb8b993f5)
 
 ![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/3713f971-a164-42f4-8bda-861cac7487bc)
 
+-------------------
+
+<h1>Change Layout Button:</h1>
+
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/2dd8c61b-97d3-49bf-9c96-eb82fb5dcc07)
