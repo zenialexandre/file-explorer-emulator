@@ -20,9 +20,9 @@ fn get_available_devices_paths() -> Vec<String> {
         let bitmask: DWORD = winapi::um::fileapi::GetLogicalDrives();
         let mut available_devices_paths: Vec<String> = Vec::new();
 
-        for i in 0..26 {
-            if (bitmask & (1 << i)) != 0 {
-                let drive_letter = (b'A' + i as u8) as char;
+        for bit in 0..26 {
+            if (bitmask & (1 << bit)) != 0 {
+                let drive_letter = (b'A' + bit as u8) as char;
                 available_devices_paths.push(format!("{}://", drive_letter));
             }
         }
