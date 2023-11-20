@@ -1312,6 +1312,7 @@ dependencies = [
  "opener",
  "regex",
  "walkdir",
+ "winapi",
 ]
 
 [[package]]

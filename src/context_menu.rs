@@ -9,7 +9,8 @@ use dioxus_desktop::tao::window::WindowId;
 
 use crate::Files;
 use crate::{window_helper, copy_and_paste_operation, cut_operation};
-use crate::{delete_popup, delete_popupProps};
+use crate::delete_operation::{delete_popup, delete_popupProps};
+use crate::change_root_path_operation::{change_root_path_popup, change_root_path_popupProps};
 use crate::create_operation::{create_rename_popup, create_rename_popupProps};
 use crate::{CLICKED_DIRECTORY_ID, PREVIOUS_OPERATION_DONE};
 
@@ -22,7 +23,7 @@ pub(crate) fn create_context_menu(cx: Scope, context_menu_dom: VirtualDom, conte
             .with_resizable(false).with_focused(true)
             .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false).with_title("")
             .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
-            .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(270.0, 330.0)))
+            .with_inner_size(dioxus_desktop::wry::application::dpi::LogicalSize::new(300.0, 430.0)))
     );
 }
 
@@ -50,6 +51,7 @@ pub(crate) fn context_menu_popup(cx: Scope, files_props: UseRef<Files>) -> Eleme
                 mounted_event.set_focus(true);
             },
             link { href:"https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", }
+            link { href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined", rel: "stylesheet", }
             style { include_str!("./assets/context_menu_popup.css") }
             div {
                 class: "context-menu",
@@ -63,6 +65,11 @@ pub(crate) fn context_menu_popup(cx: Scope, files_props: UseRef<Files>) -> Eleme
                     dioxus_desktop::use_window(cx).close();
                     copy_and_paste_operation::execute_paste_operation(files_props, &PREVIOUS_OPERATION_DONE);
                 }, label { i { class: "material-icons", "content_paste" }, "Paste / Ctrl+V" } },
+                div { class: "context-menu-item", onclick: move |_| {
+                    dioxus_desktop::use_window(cx).close();
+                    let change_root_path_dom: VirtualDom = VirtualDom::new_with_props(change_root_path_popup, change_root_path_popupProps { files_props: files_props.clone() });
+                    window_helper::create_new_dom_generic_window_state(cx.scope, change_root_path_dom, "Change Root Path");
+                }, label { i { class: "material-symbols-outlined", "home_storage" }, "Change Root Path / Ctrl+B" } },
 
                 if IS_CONTEXT_ON_ITEM.lock().unwrap().deref() == &true {
                     rsx!(
@@ -85,6 +92,11 @@ pub(crate) fn context_menu_popup(cx: Scope, files_props: UseRef<Files>) -> Eleme
                             let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files_props.clone() });
                             window_helper::create_new_dom_generic_window_state(cx.scope, delete_dom, "Delete");
                         }, label { i { class: "material-icons", "delete" }, "Delete / Ctrl+D" } },
+                        div { class: "context-menu-item", onclick: move |_| {
+                            dioxus_desktop::use_window(cx).close();
+                            let change_root_path_dom: VirtualDom = VirtualDom::new_with_props(change_root_path_popup, change_root_path_popupProps { files_props: files_props.clone() });
+                            window_helper::create_new_dom_generic_window_state(cx.scope, change_root_path_dom, "Change Root Path");
+                        }, label { i { class: "material-symbols-outlined", "home_storage" }, "Change Root Path / Ctrl+B" } },
                     )
                 }
             }

@@ -7,6 +7,7 @@ mod conflict_process;
 mod cut_operation;
 mod context_menu;
 mod search_operation;
+mod change_root_path_operation;
 
 use std::fs::ReadDir;
 use dioxus::prelude::*;
@@ -21,12 +22,14 @@ use crate::context_menu::{context_menu_popup, context_menu_popupProps};
 use crate::delete_operation::{delete_popup, delete_popupProps};
 use crate::create_operation::{create_rename_popup, create_rename_popupProps};
 use crate::conflict_process::{conflict_popup, conflict_popupProps};
+use crate::change_root_path_operation::{change_root_path_popup, change_root_path_popupProps};
 use crate::copy_and_paste_operation::COPY_INCREMENTAL_ID;
 use crate::context_menu::IS_CONTEXT_ON_ITEM;
 
 #[macro_use]
 extern crate lazy_static;
 
+lazy_static! { pub(crate) static ref ROOT_PATH: Mutex<String> =  Mutex::new("".to_string()); }
 lazy_static! { pub(crate) static ref GENERIC_POPUP_ID: Mutex<Vec<WindowId>> = Mutex::new(Vec::new()); }
 lazy_static! { pub(crate) static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0); }
 lazy_static! { pub(crate) static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string()); }
@@ -44,6 +47,7 @@ pub(crate) struct Files {
 }
 
 fn main() {
+    *ROOT_PATH.lock().unwrap() = "C://".to_string();
     dioxus_desktop::launch_cfg(
         app,
         Config::default().with_disable_context_menu(true).with_window(WindowBuilder::new()
@@ -311,6 +315,10 @@ fn handle_general_keyboard_events(cx: Scope, files: &UseRef<Files>, keydown_even
     } else if keydown_event.modifiers().contains(Modifiers::CONTROL) &&
         (keydown_event.inner().code() == Code::Minus || keydown_event.inner().code() == Code::NumpadSubtract) {
         is_table_layout_triggered.set(true);
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyB {
+        let change_root_path_dom: VirtualDom =
+            VirtualDom::new_with_props(change_root_path_popup, change_root_path_popupProps { files_props: files.clone() });
+        window_helper::create_new_dom_generic_window(cx, change_root_path_dom, "Change Root Path");
     }
 }
 
@@ -363,7 +371,7 @@ fn handle_context_menu_event(cx: Scope, files: &UseRef<Files>, context_menu_even
 impl Files {
     fn new() -> Self {
       let mut files: Files = Self {
-          path_stack: vec!["C://".to_string()],
+          path_stack: vec![ROOT_PATH.lock().unwrap().to_string()],
           path_names: vec![],
           error: None,
       };

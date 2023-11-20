@@ -1,0 +1,39 @@
+* {
+    background-color: #dccbf7;
+}
+
+.central-div {
+    font-family: 'Rubik', sans-serif;
+    padding-top: 50px;
+    padding-left: 75px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.central-div h1 {
+    width: 100px;
+    font-weight: 5px;
+    font-size: 20px;
+    white-space: nowrap;
+}
+
+.devices-combobox {
+    width: 120px;
+    height: 50px;
+    padding: 10px;
+    font-size: 12px;
+    border: 2px solid black;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.devices-option {
+    color: black;
+    font-family: 'Rubik', sans-serif;
+}
+
+.material-icons {
+    cursor: pointer;
+    padding: 5px;
+}
