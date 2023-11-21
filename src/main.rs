@@ -381,12 +381,19 @@ impl Files {
 
     fn reload_path_list(&mut self) {
         let current_path: &String = self.path_stack.last().unwrap();
+        let is_root_path = current_path.ends_with("/");
         let paths: ReadDir = match std::fs::read_dir(current_path) {
-            Ok(e) => e,
+            Ok(_ok) => _ok,
             Err(error) => {
-                let error: String = format!("An error occurred: {error:?}");
-                self.error = Some(error);
                 self.path_stack.pop();
+
+                if is_root_path {
+                    self.path_stack.push("C://".to_string());
+                    self.reload_path_list();
+                    self.error = Some(format!("Cannot access device: {error:?}"));
+                } else {
+                    self.error = Some(format!("An error occurred: {error:?}"));
+                }
                 return;
             }
         };
