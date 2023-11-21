@@ -417,8 +417,11 @@ impl Files {
         }
     }
 
-    fn current(&self) -> &str {
-        return self.path_stack.last().unwrap();
+    fn current(&self) -> String {
+        match self.path_stack.last() {
+            Some(last_path_stack) => last_path_stack.clone(),
+            None => "C://".to_string()
+        }
     }
 
     fn clear_error(&mut self) {

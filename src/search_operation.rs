@@ -1,3 +1,4 @@
+use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::ops::Not;
 use std::rc::Rc;
@@ -9,6 +10,8 @@ use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
 use dioxus_desktop::tao::dpi::LogicalPosition;
 use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 use walkdir::WalkDir;
+use rayon::prelude::*;
+use std::collections::HashSet;
 
 use crate::Files;
 use crate::window_helper;
@@ -71,10 +74,13 @@ fn execute_search_operation(cx: &ScopeState, files: &UseRef<Files>, search_resul
 }
 
 fn search(files: UseRef<Files>, search_results_map: UseRef<HashMap<usize, String>>, search_value: String) {
-    let directories_filtered: Vec<String> = WalkDir::new(files.read().current())
-        .into_iter().filter_map(|dir_entry| dir_entry.ok())
-        .filter(|dir_entry| dir_entry.file_name().to_string_lossy().contains(&search_value))
-        .map(|dir_entry| dir_entry.path().to_string_lossy().to_string()).collect();
+    let search_cache: OnceCell<HashSet<String>> = OnceCell::new();
+    let directories_filtered: HashSet<String> = search_cache.get_or_init(|| {
+        WalkDir::new(files.read().current())
+            .into_iter().par_bridge().filter_map(|dir_entry| dir_entry.ok())
+            .filter(|dir_entry| dir_entry.file_name().to_string_lossy().contains(&search_value))
+            .map(|dir_entry| dir_entry.path().to_string_lossy().to_string()).collect()
+    }).clone();
 
     for (iteration_counter, path_name) in directories_filtered.iter().enumerate() {
         search_results_map.write().insert(iteration_counter + 1, path_name.clone());
