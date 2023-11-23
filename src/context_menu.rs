@@ -92,11 +92,6 @@ pub(crate) fn context_menu_popup(cx: Scope, files_props: UseRef<Files>) -> Eleme
                             let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files_props.clone() });
                             window_helper::create_new_dom_generic_window_state(cx.scope, delete_dom, "Delete");
                         }, label { i { class: "material-icons", "delete" }, "Delete / Ctrl+D" } },
-                        div { class: "context-menu-item", onclick: move |_| {
-                            dioxus_desktop::use_window(cx).close();
-                            let change_root_path_dom: VirtualDom = VirtualDom::new_with_props(change_root_path_popup, change_root_path_popupProps { files_props: files_props.clone() });
-                            window_helper::create_new_dom_generic_window_state(cx.scope, change_root_path_dom, "Change Root Path");
-                        }, label { i { class: "material-symbols-outlined", "home_storage" }, "Change Root Path / Ctrl+B" } },
                     )
                 }
             }
