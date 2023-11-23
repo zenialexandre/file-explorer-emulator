@@ -45,7 +45,7 @@ Enter (inside of the Search Field) = Execute search inside of the current stack
 
 <h1>Context Menu:</h1>
 
-![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/da4e0444-9b62-425b-a5a1-da60656898cd)
+![image](https://github.com/zenialexandre/file-explorer-emulator/assets/84157233/c60328eb-bd86-42c9-ae19-75a0b2d3a481)
 
 -------------------
 
