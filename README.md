@@ -7,6 +7,8 @@ File Explorer Emulator - made for my Operating Systems classes at the sixth seme
 Made with Rust and the Dioxus framework.
 <br><br>
 
+‼️Windows - When running the project on Windows, now it's necessary to install the msys64 software. Direct tutorial: https://code.visualstudio.com/docs/cpp/config-mingw. 
+
 -- Keyboard Commands:
 
 Ctrl + N = New
