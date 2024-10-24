@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::ops::Not;
 use std::sync::Mutex;
-use dioxus::hooks::UseState;
 use dioxus::prelude::*;
 
 use crate::Files;
@@ -9,7 +8,7 @@ use crate::{conflict_popup, conflict_popupProps};
 use crate::{conflict_process, window_helper, rename_operation};
 use crate::{NEW_FILE_OR_DIR_NAME, CLICKED_DIRECTORY_ID, GENERIC_POPUP_ID};
 
-pub(crate) fn execute_create_operation(files: &UseRef<Files>, new_file_or_dir_name: &Mutex<String>, enable_file_creation: &UseState<bool>) -> bool {
+pub(crate) fn execute_create_operation(mut files: Signal<Files>, new_file_or_dir_name: &Mutex<String>, enable_file_creation: &Signal<bool>) -> bool {
     let selected_current_stack: String = window_helper::get_selected_current_stack(files);
 
     if conflict_process::check_file_or_dir_conflict(new_file_or_dir_name.lock().unwrap().to_string(), selected_current_stack.clone(), files) {
@@ -22,8 +21,8 @@ pub(crate) fn execute_create_operation(files: &UseRef<Files>, new_file_or_dir_na
     return true;
 }
 
-fn create_process(mut selected_current_stack: String, new_file_or_dir_name: &Mutex<String>, enable_file_creation: &UseState<bool>) {
-    if enable_file_creation.get() == &true {
+fn create_process(mut selected_current_stack: String, new_file_or_dir_name: &Mutex<String>, enable_file_creation: &Signal<bool>) {
+    if enable_file_creation.read().clone() == true {
         verify_extension(selected_current_stack.clone(), new_file_or_dir_name);
     } else {
         selected_current_stack.push_str(format!("\\{}", new_file_or_dir_name.lock().unwrap()).as_str().trim());
@@ -63,14 +62,14 @@ pub(crate) fn add_new_dir(selected_current_stack: String, is_recursive_dir_input
 }
 
 #[inline_props]
-pub(crate) fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, title_props: &'a str) -> Element {
-    GENERIC_POPUP_ID.lock().unwrap().push(dioxus_desktop::use_window(cx).id());
-    let enable_file_creation: &UseState<bool> = use_state(cx, || false);
+pub(crate) fn create_rename_popup(files_props: Signal<Files>, title_props: String) -> Element {
+    GENERIC_POPUP_ID.lock().unwrap().push(dioxus::desktop::use_window().id());
+    let mut enable_file_creation: Signal<bool> = use_signal(|| false);
 
-    cx.render(rsx! {
+    rsx! {
         div {
             link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel:"stylesheet", },
-            style { include_str!("./assets/create_rename_popup.css") }
+            style { { include_str!("./assets/create_rename_popup.css") } }
             div {
                 class: "central-div",
                 h1 { "Enter new directory/file name: " },
@@ -82,31 +81,33 @@ pub(crate) fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, tit
                         placeholder: "Directory/File new name",
                         id: "directory-file-name",
                         oninput: |type_event: Event<FormData>| {
-                            *NEW_FILE_OR_DIR_NAME.lock().unwrap() = type_event.value.to_string()
+                            *NEW_FILE_OR_DIR_NAME.lock().unwrap() = type_event.value().to_string()
                         }
                     },
-                    if title_props == &"Create" {
-                        rsx!(
-                            br {}, br {},
-                            label {
-                                input {
-                                    r#type: "checkbox",
-                                    checked: "{enable_file_creation}",
-                                    id: "enable-file-creation",
-                                    oninput: move |check_event: Event<FormData>| {
-                                        enable_file_creation.set(check_event.value.parse().unwrap());
+                    if title_props == "Create" {
+                        {
+                            rsx!(
+                                br {}, br {},
+                                label {
+                                    input {
+                                        r#type: "checkbox",
+                                        checked: "{enable_file_creation}",
+                                        id: "enable-file-creation",
+                                        oninput: move |check_event: Event<FormData>| {
+                                            enable_file_creation.set(check_event.value().parse().unwrap());
+                                        }
                                     }
-                                }
-                                "Check if the new content is a file."
-                            },
-                            br {},
-                        )
+                                    "Check if the new content is a file."
+                                },
+                                br {},
+                            )
+                        }
                     }
                     br {},
                     i {
                         class: "material-icons",
                         onclick: move |_| {
-                           dioxus_desktop::use_window(cx).close();
+                           dioxus::desktop::use_window().close();
                         },
                         "cancel"
                     },
@@ -117,15 +118,17 @@ pub(crate) fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, tit
                                 match title_props.as_ref() {
                                     "Rename" => rename_operation::execute_rename_operation(files_props, &CLICKED_DIRECTORY_ID, &NEW_FILE_OR_DIR_NAME),
                                     "Create" => {
-                                        if execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME, enable_file_creation).not() {
-                                            let conflict_dom: VirtualDom = VirtualDom::new_with_props(conflict_popup, conflict_popupProps
-                                                { files_props: files_props.clone(), enable_file_creation_props: enable_file_creation.clone() });
-                                            window_helper::create_new_dom_generic_window_state(cx, conflict_dom, "Conflict");
+                                        if execute_create_operation(files_props, &NEW_FILE_OR_DIR_NAME, &enable_file_creation).not() {
+                                            let conflict_dom: VirtualDom = VirtualDom::new_with_props(
+                                                conflict_popup,
+                                                conflict_popupProps { files_props: files_props.clone(), enable_file_creation_props: enable_file_creation.clone() }
+                                            );
+                                            window_helper::create_new_dom_generic_window_state(conflict_dom, "Conflict");
                                         }
                                     },
                                     _ => println!("Something gone wrong.")
                                 }
-                                dioxus_desktop::use_window(cx).close();
+                                dioxus::desktop::use_window().close();
                             }
                         },
                         "check_circle"
@@ -133,5 +136,5 @@ pub(crate) fn create_rename_popup<'a>(cx: Scope, files_props: UseRef<Files>, tit
                 }
             }
         }
-    })
+    }
 }

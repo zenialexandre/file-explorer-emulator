@@ -10,13 +10,20 @@ mod search_operation;
 mod change_root_path_operation;
 
 use std::fs::ReadDir;
+use dioxus::desktop::tao::platform::windows::WindowBuilderExtWindows;
 use dioxus::prelude::*;
-use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
+use dioxus::desktop::{
+    Config,
+    LogicalSize,
+    WindowBuilder,
+    tao::{
+        dpi::LogicalPosition,
+        window::WindowId
+    }
+};
 use dioxus::html::input_data::keyboard_types::{Code, Modifiers};
 use std::sync::Mutex;
 use chrono::{DateTime, Utc};
-use dioxus_desktop::tao::dpi::LogicalPosition;
-use dioxus_desktop::tao::window::WindowId;
 
 use crate::context_menu::{context_menu_popup, context_menu_popupProps};
 use crate::delete_operation::{delete_popup, delete_popupProps};
@@ -29,7 +36,7 @@ use crate::context_menu::IS_CONTEXT_ON_ITEM;
 #[macro_use]
 extern crate lazy_static;
 
-lazy_static! { pub(crate) static ref ROOT_PATH: Mutex<String> =  Mutex::new("".to_string()); }
+lazy_static! { pub(crate) static ref ROOT_PATH: Mutex<String> = Mutex::new("".to_string()); }
 lazy_static! { pub(crate) static ref GENERIC_POPUP_ID: Mutex<Vec<WindowId>> = Mutex::new(Vec::new()); }
 lazy_static! { pub(crate) static ref CLICKED_DIRECTORY_ID: Mutex<usize> = Mutex::new(0); }
 lazy_static! { pub(crate) static ref NEW_FILE_OR_DIR_NAME: Mutex<String> = Mutex::new("".to_string()); }
@@ -48,24 +55,27 @@ pub(crate) struct Files {
 
 fn main() {
     *ROOT_PATH.lock().unwrap() = "C://".to_string();
-    dioxus_desktop::launch_cfg(
-        app,
-        Config::default().with_disable_context_menu(true).with_window(WindowBuilder::new()
-            .with_resizable(true).with_title("File Explorer Emulator")
-            .with_inner_size(LogicalSize::new(1100.0, 800.0))
-            .with_position(LogicalPosition::new(100, 50))
-            .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
-            .with_focused(true)
-        )
-    );
+
+    let window_builder: WindowBuilder = WindowBuilder::default()
+        .with_title("File Explorer Emulator")
+        .with_focused(true)
+        .with_resizable(true)
+        .with_inner_size(LogicalSize::new(1100.0, 800.0))
+        .with_position(LogicalPosition::new(100, 50))
+        .with_taskbar_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"))
+        .with_window_icon(window_helper::load_icon_by_path("src/images/icon/cool_circle.png"));
+    let config: Config = Config::new()
+        .with_disable_context_menu(true)
+        .with_window(window_builder);
+    LaunchBuilder::desktop().with_cfg(desktop!(config)).launch(app);
 }
 
-fn app(cx: Scope) -> Element {
-    let main_element: &UseRef<Vec<Event<MountedData>>> = use_ref(cx, || Vec::new());
-    let files: &UseRef<Files> = use_ref(cx, Files::new);
-    let context_menu_active: &UseState<bool> = use_state(cx, || false);
-    let is_search_field_enabled: &UseState<bool> = use_state(cx, || false);
-    let is_table_layout_triggered: &UseState<bool> = use_state(cx, || false);
+fn app() -> Element {
+    let mut main_element: Signal<Vec<Event<MountedData>>> = use_signal(|| Vec::new());
+    let mut files: Signal<Files> = use_signal(Files::new);
+    let mut context_menu_active: Signal<bool> = use_signal(|| false);
+    let mut is_search_field_enabled: Signal<bool> = use_signal(|| false);
+    let is_table_layout_triggered: Signal<bool> = use_signal(|| false);
     *MAIN_ASSETS.lock().unwrap() = "padding: 20px 60px;".to_string();
     *FOLDER_ASSETS.lock().unwrap() = r"
         float: left;
@@ -77,7 +87,7 @@ fn app(cx: Scope) -> Element {
         cursor: pointer;
     ".to_string();
 
-    cx.render(rsx! {
+    rsx! {
         div {
             id: "main-div",
             autofocus: "true",
@@ -86,104 +96,117 @@ fn app(cx: Scope) -> Element {
                 main_element.write().push(element);
             },
             onclick: move |click_event: Event<MouseData>| {
-                handle_click_event(cx, click_event, context_menu_active);
+                handle_click_event(click_event, &mut context_menu_active);
                 window_helper::set_element_focus(main_element);
             },
             onkeydown: move |keydown_event: Event<KeyboardData>| {
-                handle_general_keyboard_events(cx, files, keydown_event, is_table_layout_triggered);
+                handle_general_keyboard_events(files, keydown_event, is_table_layout_triggered);
             },
             oncontextmenu: move |context_menu_event: Event<MouseData>| {
-                handle_context_menu_event(cx, files, context_menu_event, context_menu_active);
+                handle_context_menu_event(files, context_menu_event, &mut context_menu_active);
                 *IS_CONTEXT_ON_ITEM.lock().unwrap() = false;
             },
             link { href: "https://fonts.googleapis.com/icon?family=Material+Icons", rel: "stylesheet", }
             link { href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined", rel: "stylesheet", }
-            style { include_str!("./assets/styles.css") }
+            style { { include_str!("./assets/styles.css") } }
             header {
                 i { class: "material-icons", onclick: move |_| files.write().walk_to_last_directory(), "arrow_back" }
-                i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
-                h1 { files.read().current() }
+                i { class: "material-icons", onclick: move |_| window_helper::validate_clicked_id_on_click(&mut files, &CLICKED_DIRECTORY_ID), "arrow_forward" }
+                h1 { { files.read().current() } }
                 span { }
-                create_change_layout_button(cx, is_table_layout_triggered)
-                search_operation::create_search_input_field(cx, files, is_search_field_enabled)
+                { create_change_layout_button(is_table_layout_triggered) }
+                { search_operation::create_search_input_field(files, is_search_field_enabled) }
                 i { class: "material-symbols-outlined", onclick: move |_| {
-                    context_menu::close_context_menu_on_demand(cx);
-                    if is_search_field_enabled == &true {
+                    context_menu::close_context_menu_on_demand();
+                    if is_search_field_enabled.read().clone() == true {
                         is_search_field_enabled.set(false);
                     } else {
                         is_search_field_enabled.set(true);
                     }
                 }, "search" }
                 i { class: "material-icons", onclick: move |_| {
-                    window_helper::close_generic_popup_window(cx, (GENERIC_POPUP_ID.lock().unwrap()).to_vec());
-                    context_menu::close_context_menu_on_demand(cx);
-                    dioxus_desktop::use_window(cx).close();
+                    window_helper::close_generic_popup_window((GENERIC_POPUP_ID.lock().unwrap()).to_vec());
+                    context_menu::close_context_menu_on_demand();
+                    dioxus::desktop::use_window().close();
                 }, "cancel" }
             },
             div {
                 main {
                     style: "{MAIN_ASSETS.lock().unwrap()}",
-                    files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
-                        let path_end: &str = path.split('\\').last().unwrap_or(path.as_str());
-                        let icon_type: String = window_helper::get_icon_type(path.to_string());
-                        let file_type: String = window_helper::get_file_type_formatted(path.to_string());
-                        let path_metadata = std::fs::metadata(path.to_string());
-                        let file_size: u64 = window_helper::get_file_size(path.to_string());
-                        let mut last_modification_date_utc: DateTime<Utc> = Default::default();
-                        let mut _last_modification_date_formatted: String = String::new();
+                    {
+                        files.read().path_names.iter().enumerate().map(|(directory_id, path)| {
+                            let path_end: &str = path.split('\\').last().unwrap_or(path.as_str());
+                            let icon_type: String = window_helper::get_icon_type(path.to_string());
+                            let file_type: String = window_helper::get_file_type_formatted(path.to_string());
+                            let path_metadata = std::fs::metadata(path.to_string());
+                            let file_size: u64 = window_helper::get_file_size(path.to_string());
+                            let mut last_modification_date_utc: DateTime<Utc> = Default::default();
+                            let mut _last_modification_date_formatted: String = String::new();
 
-                        if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
-                            last_modification_date_utc = path_metadata.into();
-                        }
-                        _last_modification_date_formatted =
-                            last_modification_date_utc.format("%d/%m/%Y %H:%M:%S").to_string().split('.').next().expect("Next").to_string();
+                            if let Ok(path_metadata) = path_metadata.expect("Modified").modified() {
+                                last_modification_date_utc = path_metadata.into();
+                            }
+                            _last_modification_date_formatted =
+                                last_modification_date_utc.format("%d/%m/%Y %H:%M:%S").to_string().split('.').next().expect("Next").to_string();
 
-                        rsx! (
-                            div {
-                                class: "folder",
-                                style: "{FOLDER_ASSETS.lock().unwrap()}",
-                                key: "{path}",
-                                tabindex: "0",
-                                onkeydown: move |keydown_event: Event<KeyboardData>| {
-                                    handle_main_keyboard_events(cx, files, keydown_event);
-                                },
-                                ondblclick: move |_| {
-                                    handle_double_click_event(files, directory_id, main_element);
-                                },
-                                onclick: move |click_event: Event<MouseData>| {
-                                    handle_click_event(cx, click_event, context_menu_active);
-                                    *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
-                                },
-                                oncontextmenu: move |context_menu_event: Event<MouseData>| {
-                                    handle_context_menu_event(cx, files, context_menu_event, context_menu_active);
-                                    *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
-                                    *IS_CONTEXT_ON_ITEM.lock().unwrap() = true;
-                                },
-                                set_layout_option(is_table_layout_triggered.get(), icon_type, path_end.to_string(),
-                                    path.to_string(), _last_modification_date_formatted, file_type, file_size)
-                            }
-                        )
-                    }),
-                    files.read().error.as_ref().map(|err| {
-                        rsx! (
-                            div {
-                                code { "{err}" }
-                                button { onclick: move |_| files.write().clear_error(), "x" }
-                            }
-                        )
-                    })
+                            rsx! (
+                                div {
+                                    class: "folder",
+                                    style: "{FOLDER_ASSETS.lock().unwrap()}",
+                                    key: "{path}",
+                                    tabindex: "0",
+                                    onkeydown: move |keydown_event: Event<KeyboardData>| {
+                                        handle_main_keyboard_events(files, keydown_event);
+                                    },
+                                    ondoubleclick: move |_| {
+                                        handle_double_click_event(files, directory_id, main_element);
+                                    },
+                                    onclick: move |click_event: Event<MouseData>| {
+                                        handle_click_event(click_event, &mut context_menu_active);
+                                        *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
+                                    },
+                                    oncontextmenu: move |context_menu_event: Event<MouseData>| {
+                                        handle_context_menu_event(files, context_menu_event, &mut context_menu_active);
+                                        *CLICKED_DIRECTORY_ID.lock().unwrap() = directory_id;
+                                        *IS_CONTEXT_ON_ITEM.lock().unwrap() = true;
+                                    },
+                                    {
+                                        set_layout_option(
+                                            is_table_layout_triggered.read().clone(),
+                                            icon_type,
+                                            path_end.to_string(),
+                                            path.to_string(),
+                                            _last_modification_date_formatted,
+                                            file_type,
+                                            file_size
+                                        )
+                                    }
+                                }
+                            )
+                        })
+                    }
+                    {
+                        files.read().error.as_ref().map(|err| {
+                            rsx! (
+                                div {
+                                    code { "{err}" }
+                                    button { onclick: move |_| files.write().clear_error(), "x" }
+                                }
+                            )
+                        })
+                    }
                 }
             }
         }
-    })
+    }
 }
 
-fn create_change_layout_button<'a>(cx: Scope<'a>, is_table_layout_triggered: &'a UseState<bool>) -> Element<'a> {
-    cx.render(rsx!(
+fn create_change_layout_button(mut is_table_layout_triggered: Signal<bool>) -> Element {
+    rsx!(
         i {
             class: "material-symbols-outlined",
             onclick: move |_| {
-                if is_table_layout_triggered.get() == &true {
+                if is_table_layout_triggered.read().clone() == true {
                     is_table_layout_triggered.set(false);
                 } else {
                     is_table_layout_triggered.set(true);
@@ -191,20 +214,33 @@ fn create_change_layout_button<'a>(cx: Scope<'a>, is_table_layout_triggered: &'a
             },
             "sliders"
         }
-    ))
+    )
 }
 
-fn set_layout_option(is_table_layout_triggered: &bool, icon_type: String, path_end: String, path: String,
-                     _last_modification_date_formatted: String, file_type: String, file_size: u64) -> LazyNodes {
-    if is_table_layout_triggered == &true {
+fn set_layout_option(
+    is_table_layout_triggered: bool,
+    icon_type: String,
+    path_end: String,
+    path: String,
+    _last_modification_date_formatted: String,
+    file_type: String,
+    file_size: u64
+) -> Element {
+    if is_table_layout_triggered == true {
         activate_table_layout(icon_type, path_end, path, _last_modification_date_formatted, file_type, file_size)
     } else {
         activate_images_layout(icon_type, path_end, path, _last_modification_date_formatted, file_type, file_size)
     }
 }
 
-fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, _last_modification_date_formatted: String,
-                             file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
+fn activate_table_layout(
+    icon_type: String,
+    path_end: String,
+    path: String,
+    _last_modification_date_formatted: String,
+    file_type: String,
+    file_size: u64
+) -> Element {
     *MAIN_ASSETS.lock().unwrap() = r"
         padding: 20px 60px;
         display: flex;
@@ -262,9 +298,9 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
                     td { h1 { style: "{h1_assets}", "{_last_modification_date_formatted}" } },
                     td { h1 { style: "{h1_assets}", "{file_type}" } },
                     if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
-                        rsx!( td { h1 { style: "{h1_assets}", "{file_size} KB" } } )
+                        { rsx!( td { h1 { style: "{h1_assets}", "{file_size} KB" } } ) }
                     } else {
-                        rsx!( td { h1 { style: "{h1_assets}", "N/A" } } )
+                        { rsx!( td { h1 { style: "{h1_assets}", "N/A" } } ) }
                     }
                 }
             }
@@ -272,8 +308,14 @@ fn activate_table_layout<'a>(icon_type: String, path_end: String, path: String, 
     )
 }
 
-fn activate_images_layout<'a>(icon_type: String, path_end: String, path: String, _last_modification_date_formatted: String,
-                              file_type: String, file_size: u64) -> LazyNodes<'a, 'a> {
+fn activate_images_layout(
+    icon_type: String,
+    path_end: String,
+    path: String,
+    _last_modification_date_formatted: String,
+    file_type: String,
+    file_size: u64
+) -> Element {
     let i_assets: &str = r"
         margin: 0;
         font-size: 80px;
@@ -297,47 +339,56 @@ fn activate_images_layout<'a>(icon_type: String, path_end: String, path: String,
         p { class: "cooltip", "{_last_modification_date_formatted}" },
         p { class: "cooltip", "{file_type}" },
         if window_helper::get_file_type_formatted(path.to_string()) == REGULAR_FILE.to_string() {
-            rsx!( p { class: "cooltip", "{file_size} KB" } )
+            { rsx!( p { class: "cooltip", "{file_size} KB" } ) }
         }
     )
 }
 
-fn handle_general_keyboard_events(cx: Scope, files: &UseRef<Files>, keydown_event: Event<KeyboardData>, is_table_layout_triggered: &UseState<bool>) {
-    if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyN {
-        let create_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
-            create_rename_popupProps { files_props: files.clone(), title_props: "Create" });
-        window_helper::create_new_dom_generic_window(cx, create_dom, "Create");
-    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyV {
+fn handle_general_keyboard_events(files: Signal<Files>, keydown_event: Event<KeyboardData>, mut is_table_layout_triggered: Signal<bool>) {
+    if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.code() == Code::KeyN {
+        let create_dom: VirtualDom = VirtualDom::new_with_props(
+            create_rename_popup,
+            create_rename_popupProps { files_props: files.clone(), title_props: "Create".to_string() }
+        );
+        window_helper::create_new_dom_generic_window(create_dom, "Create");
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.code() == Code::KeyV {
         copy_and_paste_operation::execute_paste_operation(files, &PREVIOUS_OPERATION_DONE);
     } else if keydown_event.modifiers().contains(Modifiers::CONTROL) &&
-        (keydown_event.inner().code() == Code::Equal || keydown_event.inner().code() == Code::NumpadAdd) {
+        (keydown_event.code() == Code::Equal || keydown_event.code() == Code::NumpadAdd) {
         is_table_layout_triggered.set(false);
     } else if keydown_event.modifiers().contains(Modifiers::CONTROL) &&
-        (keydown_event.inner().code() == Code::Minus || keydown_event.inner().code() == Code::NumpadSubtract) {
+        (keydown_event.code() == Code::Minus || keydown_event.code() == Code::NumpadSubtract) {
         is_table_layout_triggered.set(true);
-    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyB {
-        let change_root_path_dom: VirtualDom =
-            VirtualDom::new_with_props(change_root_path_popup, change_root_path_popupProps { files_props: files.clone() });
-        window_helper::create_new_dom_generic_window(cx, change_root_path_dom, "Change Root Path");
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.code() == Code::KeyB {
+        let change_root_path_dom: VirtualDom = VirtualDom::new_with_props(
+            change_root_path_popup,
+            change_root_path_popupProps { files_props: files.clone() }
+        );
+        window_helper::create_new_dom_generic_window(change_root_path_dom, "Change Root Path");
     }
 }
 
-fn handle_main_keyboard_events(cx: Scope, files: &UseRef<Files>, keydown_event: Event<KeyboardData>) {
-    if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyR {
-        let rename_dom: VirtualDom = VirtualDom::new_with_props(create_rename_popup,
-            create_rename_popupProps { files_props: files.clone(), title_props: "Rename" });
-        window_helper::create_new_dom_generic_window(cx, rename_dom, "Rename");
-    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyD {
-        let delete_dom: VirtualDom = VirtualDom::new_with_props(delete_popup, delete_popupProps { files_props: files.clone() });
-        window_helper::create_new_dom_generic_window(cx, delete_dom, "Delete");
-    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyC {
+fn handle_main_keyboard_events(files: Signal<Files>, keydown_event: Event<KeyboardData>) {
+    if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.code() == Code::KeyR {
+        let rename_dom: VirtualDom = VirtualDom::new_with_props(
+            create_rename_popup,
+            create_rename_popupProps { files_props: files.clone(), title_props: "Rename".to_string() }
+        );
+        window_helper::create_new_dom_generic_window(rename_dom, "Rename");
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.code() == Code::KeyD {
+        let delete_dom: VirtualDom = VirtualDom::new_with_props(
+            delete_popup,
+            delete_popupProps { files_props: files.clone() }
+        );
+        window_helper::create_new_dom_generic_window(delete_dom, "Delete");
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.code() == Code::KeyC {
         copy_and_paste_operation::execute_copy_operation(files, &CLICKED_DIRECTORY_ID);
-    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.inner().code() == Code::KeyX {
+    } else if keydown_event.modifiers().contains(Modifiers::CONTROL) && keydown_event.code() == Code::KeyX {
         cut_operation::execute_cut_operation(files, &CLICKED_DIRECTORY_ID);
     }
 }
 
-fn handle_double_click_event(files: &UseRef<Files>, directory_id: usize, main_element: &UseRef<Vec<Event<MountedData>>>) {
+fn handle_double_click_event(mut files: Signal<Files>, directory_id: usize, main_element: Signal<Vec<Event<MountedData>>>) {
     let selected_full_path: String = window_helper::get_selected_full_path(files, &CLICKED_DIRECTORY_ID);
     match std::fs::metadata(selected_full_path.clone()) {
         Ok(path_metadata) => {
@@ -352,20 +403,22 @@ fn handle_double_click_event(files: &UseRef<Files>, directory_id: usize, main_el
     }
 }
 
-fn handle_click_event(cx: Scope, click_event: Event<MouseData>, context_menu_active: &UseState<bool>) {
+fn handle_click_event(click_event: Event<MouseData>, context_menu_active: &mut Signal<bool>) {
     click_event.stop_propagation();
-    context_menu::close_context_menu(cx, context_menu_active);
+    context_menu::close_context_menu(context_menu_active);
     context_menu_active.set(false);
 }
 
-fn handle_context_menu_event(cx: Scope, files: &UseRef<Files>, context_menu_event: Event<MouseData>, context_menu_active: &UseState<bool>) {
+fn handle_context_menu_event(files: Signal<Files>, context_menu_event: Event<MouseData>, context_menu_active: &mut Signal<bool>) {
     context_menu_event.stop_propagation();
-    context_menu::close_context_menu_on_demand(cx);
+    context_menu::close_context_menu_on_demand();
     context_menu_active.set(true);
 
-    let context_menu_dom: VirtualDom = VirtualDom::new_with_props(context_menu_popup,
-        context_menu_popupProps { files_props: files.clone() });
-    context_menu::create_context_menu(cx, context_menu_dom, context_menu_event.client_coordinates());
+    let context_menu_dom: VirtualDom = VirtualDom::new_with_props(
+        context_menu_popup,
+        context_menu_popupProps { files_props: files.clone() }
+    );
+    context_menu::create_context_menu(context_menu_dom, context_menu_event.client_coordinates());
 }
 
 impl Files {
@@ -434,5 +487,4 @@ impl Files {
     fn clear_error(&mut self) {
         self.error = None;
     }
-
 }

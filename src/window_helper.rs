@@ -1,10 +1,19 @@
 use std::ops::Not;
 use dioxus::prelude::*;
-use dioxus_desktop::tao::window::{Icon as TaoIcon, WindowId};
+use dioxus::desktop::{
+    Config,
+    LogicalSize,
+    WindowBuilder,
+    tao::{
+        window::{
+            Icon as TaoIcon,
+            WindowId
+        },
+        platform::windows::WindowBuilderExtWindows
+    }
+};
 use image::GenericImageView;
 use std::sync::Mutex;
-use dioxus_desktop::{Config, LogicalSize, WindowBuilder};
-use dioxus_desktop::tao::platform::windows::WindowBuilderExtWindows;
 
 use crate::Files;
 
@@ -18,7 +27,7 @@ pub(crate) fn load_icon_by_path(file_path: &str) -> Option<TaoIcon> {
     }
 }
 
-pub(crate) fn validate_clicked_id_on_click(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) {
+pub(crate) fn validate_clicked_id_on_click(files: &mut Signal<Files>, clicked_directory_id: &Mutex<usize>) {
     let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
 
     if converted_clicked_directory_id >= get_converted_usize_from_string("0".to_string()) {
@@ -87,33 +96,43 @@ pub(crate) fn get_converted_usize_from_string(any_string: String) -> usize {
     return any_string.parse().unwrap();
 }
 
-pub(crate) fn create_new_dom_generic_window(cx: Scope, generic_dom: VirtualDom, generic_window_name: &str) {
-    dioxus_desktop::use_window(cx).new_window(generic_dom, Config::default()
+pub(crate) fn create_new_dom_generic_window(generic_dom: VirtualDom, generic_window_name: &str) {
+    dioxus::desktop::use_window().new_window(generic_dom, Config::default()
         .with_window(WindowBuilder::new()
-            .with_resizable(false).with_focused(true)
-            .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false)
+            .with_resizable(false)
+            .with_focused(true)
+            .with_closable(false)
+            .with_drag_and_drop(false)
+            .with_skip_taskbar(false)
             .with_window_icon(load_icon_by_path("src/images/icon/cool_circle.png"))
-            .with_title(generic_window_name).with_inner_size(LogicalSize::new(700.0, 300.0)))
+            .with_title(generic_window_name)
+            .with_inner_size(LogicalSize::new(700.0, 300.0))
+        )
     );
 }
 
-pub(crate) fn create_new_dom_generic_window_state(cx: &ScopeState, generic_dom: VirtualDom, generic_window_name: &str) {
-    dioxus_desktop::use_window(cx).new_window(generic_dom, Config::default()
+pub(crate) fn create_new_dom_generic_window_state(generic_dom: VirtualDom, generic_window_name: &str) {
+    dioxus::desktop::use_window().new_window(generic_dom, Config::default()
         .with_window(WindowBuilder::new()
-            .with_resizable(false).with_focused(true)
-            .with_closable(false).with_drag_and_drop(false).with_skip_taskbar(false)
+            .with_resizable(false)
+            .with_focused(true)
+            .with_closable(false)
+            .with_drag_and_drop(false)
+            .with_skip_taskbar(false)
             .with_window_icon(load_icon_by_path("src/images/icon/cool_circle.png"))
-            .with_title(generic_window_name).with_inner_size(LogicalSize::new(700.0, 300.0)))
+            .with_title(generic_window_name)
+            .with_inner_size(LogicalSize::new(700.0, 300.0))
+        )
     );
 }
 
-pub(crate) fn get_selected_full_path(files: &UseRef<Files>, clicked_directory_id: &Mutex<usize>) -> String {
+pub(crate) fn get_selected_full_path(files: Signal<Files>, clicked_directory_id: &Mutex<usize>) -> String {
     let converted_clicked_directory_id: usize = get_converted_usize_from_string(clicked_directory_id.lock().unwrap().to_string());
     let selected_full_path: String = files.read().path_names[converted_clicked_directory_id].to_string();
     selected_full_path
 }
 
-pub(crate) fn get_selected_current_stack(files: &UseRef<Files>) -> String {
+pub(crate) fn get_selected_current_stack(files: Signal<Files>) -> String {
     let selected_current_stack: String = files.read().path_stack[files.read().path_stack.len() - 1].to_string();
     selected_current_stack
 }
@@ -122,34 +141,36 @@ pub(crate) fn open_file(selected_path: &str) {
     opener::open(selected_path).unwrap_or_else(|error| println!("{}", error));
 }
 
-pub(crate) fn open_folder(cx: &ScopeState, files_props: &UseRef<Files>, searched_object_path: String) {
+pub(crate) fn open_folder(mut files_props: Files, searched_object_path: String) {
     let searched_object_path_splitted = searched_object_path.split("\\");
-    files_props.write().path_stack.clear();
+    files_props.path_stack.clear();
 
     for (index, splitted_path) in searched_object_path_splitted.enumerate() {
         if index == 0 {
             let home_path: Vec<&str> = splitted_path.split("//").collect();
-            files_props.write().path_stack.push(format!("{}//", home_path.get(0).unwrap().to_string()));
-            files_props.write().path_stack
+            files_props.path_stack.push(format!("{}//", home_path.get(0).unwrap().to_string()));
+            files_props.path_stack
                 .push(format!("{}//{}", home_path.get(0).unwrap(), home_path.get(1).unwrap()));
         } else {
-            let last_stack: String = files_props.read().path_stack.last().unwrap().to_string();
-            files_props.write().path_stack
+            let last_stack: String = files_props.path_stack.last().unwrap().to_string();
+            files_props.path_stack
                 .push(format!("{}\\{}", last_stack, splitted_path));
         }
     }
-    files_props.write().reload_path_list();
-    dioxus_desktop::use_window(cx).close();
+    files_props.reload_path_list();
+    dioxus::desktop::use_window().close();
 }
 
-pub(crate) fn set_element_focus(main_element: &UseRef<Vec<Event<MountedData>>>) {
-    if let Some(element) = main_element.read().last() {
-        element.set_focus(true);
-    }
+pub(crate) fn set_element_focus(main_element: Signal<Vec<Event<MountedData>>>) {
+    use_future(move || async move {
+        if let Some(element) = main_element.read().last() {
+            let _ = element.set_focus(true);
+        }
+    });
 }
 
-pub(crate) fn close_generic_popup_window(cx: Scope, mut generic_popup_id: Vec<WindowId>) {
+pub(crate) fn close_generic_popup_window(mut generic_popup_id: Vec<WindowId>) {
     if generic_popup_id.is_empty().not() {
-        dioxus_desktop::use_window(cx).close_window(generic_popup_id.pop().unwrap());
+        dioxus::desktop::use_window().close_window(generic_popup_id.pop().unwrap());
     }
 }
