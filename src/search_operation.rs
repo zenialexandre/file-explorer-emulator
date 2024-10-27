@@ -29,7 +29,7 @@ use crate::{REGULAR_FILE, GENERIC_POPUP_ID};
 lazy_static! { static ref SEARCHED_PATH_CLICKED: Mutex<String> = Mutex::new("".to_string()); }
 
 pub(crate) fn create_search_input_field(files: Signal<Files>, is_search_field_enabled: Signal<bool>) -> Element {
-    //let mut search_input_field_element: Signal<Vec<Event<MountedData>>> = use_signal(|| Vec::new());
+    let mut search_input_field_element: Signal<Vec<Event<MountedData>>> = use_signal(|| Vec::new());
     let mut search_value: Signal<String> = use_signal(|| String::new());
     let search_results_map: HashMap<usize, String> = HashMap::new();
 
@@ -54,6 +54,10 @@ pub(crate) fn create_search_input_field(files: Signal<Files>, is_search_field_en
                 placeholder: "Search inside the current stack...",
                 onmounted: move |mounted_event: Event<MountedData>| async move {
                     let _ = mounted_event.set_focus(true).await;
+                    search_input_field_element.write().push(mounted_event);
+                },
+                onclick: move |_| {
+                    let _ = window_helper::set_element_focus(search_input_field_element);
                 },
                 oninput: move |type_event: Event<FormData>| {
                     search_value.set(type_event.value().to_string());
